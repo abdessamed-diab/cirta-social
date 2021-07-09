@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 //@SpringJUnitWebConfig
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "spring.profiles.active=dev") // integration test because we have filters.
 class BookRestControllerTest {
-    private static final Logger logger = LoggerFactory.getLogger(BookRestController.class);
+    private static final Logger logger = LoggerFactory.getLogger(BookRestControllerTest.class);
     private MockMvc mockMvc;
 
     @Value("${dz.cirta.app.volume}")
@@ -119,7 +119,7 @@ class BookRestControllerTest {
 
     @Test
     public void testExtractBookmarkNotAcceptable() throws Exception {
-        Long bookId = 1L; // arg1 book does not exist.
+        Long bookId = 13L; // arg1 book does not exist.
         mockMvc.perform(
                 get("/book/bookmark/{bookId}", bookId)
                         .header("Authorization", "Bearer 34i3j4iom2323==")

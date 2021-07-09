@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "spring.profiles.active=dev")
 class LoginControllerTest {
-    private static final Logger logger = LoggerFactory.getLogger(BookRestController.class);
+    private static final Logger logger = LoggerFactory.getLogger(LoginControllerTest.class);
     private MockMvc mockMvc;
 
     @BeforeEach

@@ -3,17 +3,23 @@ package dz.cirta.data.service;
 import dz.cirta.data.models.Book;
 import dz.cirta.data.models.CirtaAuthority;
 import dz.cirta.data.repo.CirtaCommonsRepository;
+import dz.cirta.tools.PdfStreamApi;
 import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 @Service
 public class BusinessLogic implements IBusinessLogic{
+
+   @Value("${dz.cirta.app.volume}")
+   private String volumeBaseDir;
 
    @Autowired
    private Session hibernateSession;
@@ -63,11 +69,16 @@ public class BusinessLogic implements IBusinessLogic{
     * update summary data, hibernate search framework take care of updating elasticSearch cluster.
     * since we have a free bonsai.io cluster account, we need to push one single row at a time.
     * this operation will be launched once deployment is scheduled.
-    * @param books list of books we want to save.
     * @return true if all books with there respective summaries were saved successfully.
     */
-   public boolean saveBooksAndSummaries(List<Book> books) {
+   @Override
+   public boolean loadBooksWithSummariesToElasticSearchCluster() throws IOException {
       // check elastic search limit of queries per second.
+      String pdfDocumentDirectory = volumeBaseDir + "books/";
+      String coverPhotoFileNameMappingSourceFileUrl = volumeBaseDir + "books/cover_photo_file_name_mapping.txt";
+
+      List<Book> books = PdfStreamApi.initializeBookProperties(pdfDocumentDirectory,
+            coverPhotoFileNameMappingSourceFileUrl);
 
       books.stream().forEach(
             book -> {

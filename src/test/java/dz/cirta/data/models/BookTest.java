@@ -1,18 +1,19 @@
 package dz.cirta.data.models;
 
-import dz.cirta.tools.PdfStreamApi;
+import dz.cirta.data.repo.CirtaCommonsRepository;
 import dz.cirta.data.service.BusinessLogic;
-import org.hibernate.Session;
+import dz.cirta.tools.PdfStreamApi;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -27,10 +28,10 @@ class BookTest {
     private BusinessLogic businessLogic;
 
     @Autowired
-    private Session hibernateSession;
+    private CirtaCommonsRepository cirtaCommonsRepository;
 
     @Test
-    public void testExtractBookMetaData() throws IOException {
+    public void testFillBookMetaData() throws IOException {
         Book book = new Book();
         book.setCoverPhotoUrl(volumeBaseDir+"subjects/1.jpg");
 
@@ -44,13 +45,10 @@ class BookTest {
     }
 
     @Test
-    public void testSaveBooksAndBookSummaries() throws IOException {
-        String pdfDocumentDirectory= volumeBaseDir+"books/test/";
-        String coverPhotoFileNameMappingSourceFileUrl= volumeBaseDir+"books/cover_photo_file_name_mapping.txt";
-        List<Book> books = PdfStreamApi.initializeBookProperties(pdfDocumentDirectory, coverPhotoFileNameMappingSourceFileUrl);
+    public void testLoadBooksWithSummariesToElasticSearchCluster() throws IOException {
+        assumeTrue(businessLogic.loadBooksWithSummariesToElasticSearchCluster());
 
-        assertTrue(businessLogic.saveBooksAndSummaries(books));
-        List<SummaryItem> items = hibernateSession.createNativeQuery("SELECT * from summary_item", SummaryItem.class).getResultList();
+        Collection<SummaryItem> items = cirtaCommonsRepository.findAll(SummaryItem.class);
         assertTrue(!items.isEmpty());
     }
 

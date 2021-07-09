@@ -1,22 +1,18 @@
 package dz.cirta.data.models;
 
-import dz.cirta.data.service.BusinessLogic;
 import org.hibernate.Session;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "spring.profiles.active=dev") // integration test because we have filters.
 public class NotificationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NotificationTest.class);
-
     @Autowired
     private Session hibernateSession;
 

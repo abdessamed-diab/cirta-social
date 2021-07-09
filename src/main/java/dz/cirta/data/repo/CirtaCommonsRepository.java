@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,4 +40,13 @@ public class CirtaCommonsRepository {
             .setParameter("userId", userId)
             .getResultList();
    }
+
+   public <T> Collection<T> findAll(Class<T> clazz) {
+      CriteriaQuery<T> criteriaQuery = hibernateSession.getCriteriaBuilder().createQuery(clazz);
+      Root<T> root = criteriaQuery.from(clazz);
+      criteriaQuery.select(root);
+
+      return hibernateSession.createQuery(criteriaQuery).getResultList();
+   }
+
 }

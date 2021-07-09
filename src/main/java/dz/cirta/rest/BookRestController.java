@@ -1,8 +1,7 @@
 package dz.cirta.rest;
 
-import dz.cirta.tools.PdfStreamApi;
 import dz.cirta.data.models.*;
-import dz.cirta.data.service.BusinessLogic;
+import dz.cirta.tools.PdfStreamApi;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
