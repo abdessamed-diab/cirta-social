@@ -86,13 +86,12 @@ class PdfStreamApiTest {
    }
 
    @Test
-   public void testInitializeBookPropertiesNoSuchDirectoryException() {
+   public void testInitializeBookPropertiesNoSuchDirectory() throws IOException {
       String pdfDocumentDirectory = "volume"+File.separator+"bookss"+File.separator;
       String coverPhotoFileNameMappingSourceFileUrl = "volume"+File.separator+"books"+File.separator+"cover_photo_file_name_mapping.txt";
-      assertThrows(
-            FileNotFoundException.class,
-            () -> PdfStreamApi.initializeBookProperties(pdfDocumentDirectory, coverPhotoFileNameMappingSourceFileUrl)
-      );
+      List<Book> books = PdfStreamApi.initializeBookProperties(pdfDocumentDirectory, coverPhotoFileNameMappingSourceFileUrl);
+
+      assertTrue(books.isEmpty());
    }
 
    @Test

@@ -16,15 +16,11 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocume
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -85,32 +81,28 @@ public final class PdfStreamApi {
       final List<Book> result = new ArrayList<>();
       final List<String> lines = lines(coverPhotoFileNameMappingSourceFileUrl);
 
-      paths(pdfDocumentDirectory)
-            .map(path -> path.getFileName())
-            .forEach(fileName -> {
+      lines.forEach(line -> {
 
-               try {
-                  Optional<String> coverPhotoPath = lines
-                        .stream()
-                        .filter(
-                              line -> fileName.startsWith(line.split("=")[0])
-                        )
-                        .findFirst();
+         try {
+            String[] tab = line.split("=");
+            String fileName = tab[0].trim();
+            String coverPhotoUrl = tab[1].trim();
 
-                  if (coverPhotoPath.isPresent()) {
-                     Book book = new Book();
-                     book.setCoverPhotoUrl(coverPhotoPath.get().split("=")[1]);
-                     PdfStreamApi.fillBookMetaData(book, pdfDocumentDirectory + fileName);
-                     // TODO ad check weather removing map from book model.
-                     book.setBookAttributes(extractPdfBookmark(pdfDocumentDirectory + fileName));
-                     book.setSummaryItems(extractSummary(pdfDocumentDirectory + fileName, book));
-                     result.add(book);
-                  }
+            if (!StringUtils.isEmpty(fileName) && !StringUtils.isEmpty(coverPhotoUrl)) {
+               Book book = new Book();
+               book.setCoverPhotoUrl(coverPhotoUrl);
+               PdfStreamApi.fillBookMetaData(book, pdfDocumentDirectory + fileName);
+               // TODO ad check weather removing map from book model.
+               book.setBookAttributes(extractPdfBookmark(pdfDocumentDirectory + fileName));
+               book.setSummaryItems(extractSummary(pdfDocumentDirectory + fileName, book));
+               result.add(book);
+            }
 
-               } catch (IndexOutOfBoundsException | IOException ex) {
-                  logger.error(ex.getMessage(), ex);
-               }
-            });
+         } catch (IndexOutOfBoundsException | IOException ex) {
+            logger.warn(ex.getMessage(), ex);
+         }
+
+      });
 
       return result;
    }
@@ -266,16 +258,6 @@ public final class PdfStreamApi {
 
       doc.close();
       return all;
-   }
-
-   private static Stream<Path> paths(String pdfDocumentDirectory) throws IOException {
-      Resource basePdfFileSourceDirectory = FileUtils.LOAD_FILE_FROM_CLASSPATH(pdfDocumentDirectory);
-
-      return Files.find(
-            Paths.get(basePdfFileSourceDirectory.getURI()),
-            1,
-            (Path path, BasicFileAttributes attributes) -> attributes.isRegularFile() && path.getFileName().toString().endsWith("pdf")
-         );
    }
 
    private static List<String> lines(String coverPhotoFileNameMappingSourceFileUrl) throws IOException {
