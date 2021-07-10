@@ -15,13 +15,6 @@ pipeline {
   }
 
   stages {
-    stage('checkout') {
-      steps {
-        echo "checkout $currentBuild.projectName from github repository"
-        checkout scm: [$class: 'GitSCM', branches: [[name: 'refs/heads/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'test', name: 'origin', refspec: 'refs/heads/master:refs/remotes/origin/master', url: 'https://github.com/abdessamed-diab/cirta-social']]]
-      }
-    }
-
     stage('requirements') {
       when {
         not {
@@ -37,23 +30,6 @@ pipeline {
       post {
         aborted {
           error "build was aborted due system requirements."
-        }
-      }
-    }
-
-    stage('deploy') {
-      steps {
-        script {
-          def imageName = "cirta-social-${params.environment}-dockerfile"
-          echo "image name is : $imageName"
-          projectVersion = sh (script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
-          sh "echo COPY dz.cirta.cirta-social-${projectVersion}.jar  /appli/cirta-social-${projectVersion}.jar >> $imageName  "
-          sh "echo CMD java -jar /appli/cirta-social-${projectVersion}.jar ${params.environment} >> $imageName"
-          echo "extracted version: $projectVersion"
-          dockerImage = docker.build("abdessamed/cirta-social:$projectVersion", "-f $imageName .")
-          withDockerRegistry(credentialsId: 'docker-hub') {
-            dockerImage.push()
-          }
         }
       }
     }
@@ -82,6 +58,23 @@ pipeline {
     stage('package') {
       steps {
         sh "mvn package"
+      }
+    }
+
+    stage('deploy') {
+      steps {
+        script {
+          def imageName = "cirta-social-${params.environment}-dockerfile"
+          echo "image name is : $imageName"
+          projectVersion = sh (script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
+          echo "extracted version: $projectVersion"
+          sh "echo COPY target/dz.cirta.cirta-social-${projectVersion}.jar  /appli/cirta-social-${projectVersion}.jar >> $imageName  "
+          sh "echo CMD java -jar /appli/cirta-social-${projectVersion}.jar ${params.environment} >> $imageName"
+          dockerImage = docker.build("abdessamed/cirta-social:$projectVersion", "-f $imageName .")
+          withDockerRegistry(credentialsId: 'docker-hub') {
+            dockerImage.push()
+          }
+        }
       }
     }
 
