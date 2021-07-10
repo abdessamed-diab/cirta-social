@@ -1,9 +1,11 @@
 package dz.cirta.rest;
 
 import dz.cirta.data.models.Book;
+import dz.cirta.data.models.CirtaAuthority;
 import dz.cirta.data.models.CirtaUser;
 import dz.cirta.data.models.Comment;
-import dz.cirta.data.service.BusinessLogic;
+import dz.cirta.data.repo.CirtaCommonsRepository;
+import dz.cirta.data.service.IBusinessLogic;
 import org.hibernate.Session;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,15 +27,21 @@ import org.springframework.web.context.WebApplicationContext;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = "spring.profiles.active=dev")
-//@SpringJUnitWebConfig
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "spring.profiles.active=dev") // integration test because we have filters.
+/**
+ * integration tests.
+ */
+@SpringBootTest(
+      webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+      properties = "spring.profiles.active=dev"
+)
 class BookRestControllerTest {
     private static final Logger logger = LoggerFactory.getLogger(BookRestControllerTest.class);
     private MockMvc mockMvc;
@@ -42,21 +50,22 @@ class BookRestControllerTest {
     private String volumeDirectory;
 
     @Autowired
-    private BusinessLogic dao;
-
-    @Autowired
     private MappingJackson2HttpMessageConverter myMappingJackson2HttpMessageConverter;
 
     @Autowired
     private Session hibernateSession;
+
+    @Autowired
+    private CirtaCommonsRepository cirtaCommonsRepository;
+
+    @Autowired
+    private IBusinessLogic businessLogic;
 
     @BeforeEach
     public void beforeEach(WebApplicationContext webApplicationContext) {
         // mockMvc = MockMvcBuilders.standaloneSetup(new BookRestController()).build(); we have filters to configure, we need to pass to integration testing.
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
-
-
 
     @Test
     public void testStreamBookByBookId() throws Exception {
@@ -103,7 +112,9 @@ class BookRestControllerTest {
     @Test
     @WithMockUser(username = "tester", password = "rahba")
     public void testExtractBookmark() throws Exception {
-        Long bookId = 2L; // arg1 book does not exist.
+        Collection<Book> books = cirtaCommonsRepository.findAll(Book.class);
+        assumeTrue(!books.isEmpty());
+        Long bookId = books.iterator().next().getId();
         String bookmark = mockMvc.perform(
                 get("/book/bookmark/{bookId}", bookId)
                         .header("Authorization", "Bearer 34i3j4iom2323==")
@@ -136,11 +147,14 @@ class BookRestControllerTest {
         author.setLanguage((byte) 1); // dont use arabic localeDateTime pattern for testing.
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        author, null, Arrays.asList(new SimpleGrantedAuthority("DEVELOPER"))
+                        author, null, Arrays.asList(new SimpleGrantedAuthority(CirtaAuthority.AuthorityEnum.DEVELOPER.label))
                 )
         );
 
-        Book book = hibernateSession.find(Book.class, 2L);
+        Collection<Book> books = cirtaCommonsRepository.findAll(Book.class);
+        assumeTrue(!books.isEmpty());
+
+        Book book = books.iterator().next();
         Comment comment = new Comment();
         comment.setAuthor(author);
         comment.setBook(book);

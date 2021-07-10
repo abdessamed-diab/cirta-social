@@ -1,5 +1,6 @@
 package dz.cirta.tools;
 
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
@@ -13,13 +14,18 @@ public class FileUtils {
 
 
    public static String ENCODE_FILE_CONTENT(String resourceUrl) throws IOException {
-      URI uri = LOAD_FILE(resourceUrl).getURI();
+      URI uri = LOAD_FILE_FROM_CLASSPATH(resourceUrl).getURI();
       byte[] fileContent = Files.readAllBytes(Paths.get(uri));
       return Base64.getEncoder().encodeToString(fileContent);
    }
 
+   @Deprecated(since = "2.0", forRemoval = true)
    public static Resource LOAD_FILE(String resourceUrl) {
       return new FileSystemResource(resourceUrl);
+   }
+
+   public static Resource LOAD_FILE_FROM_CLASSPATH(String resourceUrl) {
+      return new ClassPathResource(resourceUrl);
    }
 
 }

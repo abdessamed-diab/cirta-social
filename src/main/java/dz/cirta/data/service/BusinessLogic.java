@@ -5,6 +5,9 @@ import dz.cirta.data.models.CirtaAuthority;
 import dz.cirta.data.repo.CirtaCommonsRepository;
 import dz.cirta.tools.PdfStreamApi;
 import org.hibernate.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,7 +19,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 @Service
-public class BusinessLogic implements IBusinessLogic{
+public class BusinessLogic implements IBusinessLogic, InitializingBean {
+   private static final Logger logger = LoggerFactory.getLogger(BusinessLogic.class);
 
    @Value("${dz.cirta.app.volume}")
    private String volumeBaseDir;
@@ -26,6 +30,17 @@ public class BusinessLogic implements IBusinessLogic{
 
    @Autowired
    private CirtaCommonsRepository cirtaCommonsRepository;
+
+   @Override
+   public void afterPropertiesSet() {
+      try {
+         logger.info("start loading summaries to elastic search cluster...");
+         loadBooksWithSummariesToElasticSearchCluster();
+      } catch (IOException ex) {
+         logger.warn("can't load summaries to elastic search cluster.");
+         ex.printStackTrace();
+      }
+   }
 
    @Deprecated(since = "2.0", forRemoval = true)
    @Transactional(readOnly = true)
@@ -71,8 +86,7 @@ public class BusinessLogic implements IBusinessLogic{
     * this operation will be launched once deployment is scheduled.
     * @return true if all books with there respective summaries were saved successfully.
     */
-   @Override
-   public boolean loadBooksWithSummariesToElasticSearchCluster() throws IOException {
+   private boolean loadBooksWithSummariesToElasticSearchCluster() throws IOException {
       // check elastic search limit of queries per second.
       String pdfDocumentDirectory = volumeBaseDir + "books/";
       String coverPhotoFileNameMappingSourceFileUrl = volumeBaseDir + "books/cover_photo_file_name_mapping.txt";
@@ -119,5 +133,4 @@ public class BusinessLogic implements IBusinessLogic{
       hibernateSession.clear();
       return true;
    }
-
 }

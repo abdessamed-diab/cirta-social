@@ -1,6 +1,5 @@
 package dz.cirta.data.models;
 
-import dz.cirta.data.service.BusinessLogic;
 import org.hibernate.Session;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

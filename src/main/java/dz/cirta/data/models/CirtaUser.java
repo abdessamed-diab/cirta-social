@@ -12,7 +12,8 @@ import java.util.Set;
 public class CirtaUser implements UserDetails, Comparable<CirtaUser> {
 
    @Id
-   @GeneratedValue(strategy = GenerationType.AUTO)
+   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "cirta_user_sequence_generator")
+   @SequenceGenerator(name = "cirta_user_sequence_generator", allocationSize = 1, sequenceName = "cirta_user_sequence")
    @JsonIgnore
    private long id;
 

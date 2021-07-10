@@ -13,7 +13,6 @@ import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -45,11 +44,9 @@ class BookTest {
     }
 
     @Test
-    public void testLoadBooksWithSummariesToElasticSearchCluster() throws IOException {
-        assumeTrue(businessLogic.loadBooksWithSummariesToElasticSearchCluster());
-
-        Collection<SummaryItem> items = cirtaCommonsRepository.findAll(SummaryItem.class);
-        assertTrue(!items.isEmpty());
+    public void testLoadBooksWithSummariesToElasticSearchCluster() {
+        Collection<Book> books = cirtaCommonsRepository.findAll(Book.class);
+        assertTrue(!books.isEmpty());
     }
 
 

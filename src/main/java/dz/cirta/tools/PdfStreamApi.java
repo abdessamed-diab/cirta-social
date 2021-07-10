@@ -35,7 +35,7 @@ public final class PdfStreamApi {
    private static final Logger logger = LoggerFactory.getLogger(PdfStreamApi.class);
 
    public static boolean splitPdfFile(final int start, final int end, final String source) throws IOException {
-      Resource resource = FileUtils.LOAD_FILE(source);
+      Resource resource = FileUtils.LOAD_FILE_FROM_CLASSPATH(source);
       PDDocument pdf = PDDocument.load(resource.getFile());
       List<PDDocument> documents = getDefaultSplitter(start, end).split(pdf); // only one document, check start, end and at page parameters.
 
@@ -63,7 +63,7 @@ public final class PdfStreamApi {
    }
 
    public static void splitPdfToOutputStream(final int start, final int end, final String source, OutputStream outputStream) throws IOException {
-      Resource resource = FileUtils.LOAD_FILE(source);
+      Resource resource = FileUtils. LOAD_FILE_FROM_CLASSPATH(source);
       PDDocument pdf = PDDocument.load(resource.getFile());
       List<PDDocument> documents = getDefaultSplitter(start, end).split(pdf); // only one document, check start, end and at page parameters.
 
@@ -80,13 +80,14 @@ public final class PdfStreamApi {
    public static List<Book> initializeBookProperties(final String pdfDocumentDirectory,
                                                      final String coverPhotoFileNameMappingSourceFileUrl) throws IOException {
       final List<Book> result = new ArrayList<>();
+      final List<String> lines = lines(coverPhotoFileNameMappingSourceFileUrl);
 
       paths(pdfDocumentDirectory)
             .map(path -> path.getFileName())
             .forEach(fileName -> {
 
                try {
-                  Optional<String> coverPhotoPath = lines(coverPhotoFileNameMappingSourceFileUrl)
+                  Optional<String> coverPhotoPath = lines
                         .stream()
                         .filter(
                               line -> fileName.startsWith(line.split("=")[0])
@@ -116,7 +117,7 @@ public final class PdfStreamApi {
          throw new IllegalArgumentException("books needs cover photo url.");
       }
 
-      Resource resource = FileUtils.LOAD_FILE(resourceUrl);
+      Resource resource = FileUtils.LOAD_FILE_FROM_CLASSPATH(resourceUrl);
       PDDocument doc = PDDocument.load(resource.getFile());
       PDDocumentInformation pdfInformation = doc.getDocumentInformation();
 
@@ -150,7 +151,7 @@ public final class PdfStreamApi {
    }
 
    private static Map<String, List<Bookmark>> extractPdfBookmark(String resourceUrl) throws IOException {
-      Resource resource = FileUtils.LOAD_FILE(resourceUrl);
+      Resource resource = FileUtils.LOAD_FILE_FROM_CLASSPATH(resourceUrl);
       PDDocument doc = PDDocument.load(resource.getFile());
       PDDocumentOutline pdfDocOutline = doc.getDocumentCatalog().getDocumentOutline();
 
@@ -207,7 +208,7 @@ public final class PdfStreamApi {
    }
 
    private static synchronized List<SummaryItem> extractSummary(String resourceUrl, Book book) throws IOException {
-      Resource resource = FileUtils.LOAD_FILE(resourceUrl);
+      Resource resource = FileUtils.LOAD_FILE_FROM_CLASSPATH(resourceUrl);
       PDDocument doc = PDDocument.load(resource.getFile());
       PDDocumentOutline pdfDocOutline = doc.getDocumentCatalog().getDocumentOutline();
 
@@ -264,18 +265,17 @@ public final class PdfStreamApi {
    }
 
    private static Stream<Path> paths(String pdfDocumentDirectory) throws IOException {
-      Resource basePdfFileSourceDirectory = FileUtils.LOAD_FILE(pdfDocumentDirectory);
+      Resource basePdfFileSourceDirectory = FileUtils.LOAD_FILE_FROM_CLASSPATH(pdfDocumentDirectory);
 
-      return Files.find(Paths.get(basePdfFileSourceDirectory.getURI()),
+      return Files.find(
+            Paths.get(basePdfFileSourceDirectory.getURI()),
             1,
-            ((Path path, BasicFileAttributes attributes) ->
-                  attributes.isRegularFile() && path.getFileName().toString().endsWith("pdf")
-            )
-      );
+            (Path path, BasicFileAttributes attributes) -> attributes.isRegularFile() && path.getFileName().toString().endsWith("pdf")
+         );
    }
 
    private static List<String> lines(String coverPhotoFileNameMappingSourceFileUrl) throws IOException {
-      File file = FileUtils.LOAD_FILE(coverPhotoFileNameMappingSourceFileUrl).getFile();
+      File file = FileUtils.LOAD_FILE_FROM_CLASSPATH(coverPhotoFileNameMappingSourceFileUrl).getFile();
       return file.exists() && file.isFile() ?  Files.readAllLines(file.toPath()) : Arrays.asList();
    }
 
