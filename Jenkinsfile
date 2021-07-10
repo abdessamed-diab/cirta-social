@@ -2,11 +2,16 @@ pipeline {
   agent {
     label 'agent_2'
   }
+
+  parameters {
+    choice choices: ['release', 'production'], description: 'choose target environment', name: 'environment'
+  }
+
   environment {
     maven_is_installed = sh (script: "mvn -v", returnStatus: true)
     testResultSummary = 100
-    imageName = 'cirta-social-release-dockerfile'
     dockerImage = ''
+    projectVersion = ''
   }
 
   stages {
@@ -14,18 +19,6 @@ pipeline {
       steps {
         echo "checkout $currentBuild.projectName from github repository"
         checkout scm: [$class: 'GitSCM', branches: [[name: 'refs/heads/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'test', name: 'origin', refspec: 'refs/heads/master:refs/remotes/origin/master', url: 'https://github.com/abdessamed-diab/cirta-social']]]
-      }
-    }
-
-    stage('push') {
-      steps {
-        echo "push image: $env.imageName to docker hub registry."
-        script {
-          dockerImage = docker.build " --file $env.imageName --tag abdessamed/cirta-social:2.0-RC1"
-          withDockerRegistry(credentialsId: 'docker-hub') {
-            dockerImage.push()
-          }
-        }
       }
     }
 
@@ -48,12 +41,6 @@ pipeline {
       }
     }
 
-    stage('compile') {
-      steps {
-        sh "mvn compile"
-      }
-    }
-
     stage('test') {
       steps {
         sh "mvn --fail-never test"
@@ -70,6 +57,28 @@ pipeline {
       post {
         aborted {
           error "build is aborted due project health, check test success percentage: $testResultSummary"
+        }
+      }
+
+    }
+
+    stage('package') {
+      steps {
+        sh "mvn package"
+      }
+    }
+
+    stage('deploy') {
+      steps {
+        script {
+          def imageName = "cirta-social-${params.environment}-dockerfile"
+          echo "image name is : $imageName"
+          projectVersion = sh (script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
+          echo "extracted version: $projectVersion"
+          dockerImage = docker.build("abdessamed/cirta-social:$env.projectVersion", "-f $imageName .")
+          withDockerRegistry(credentialsId: 'docker-hub') {
+            dockerImage.push()
+          }
         }
       }
     }
