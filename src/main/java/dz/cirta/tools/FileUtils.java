@@ -5,6 +5,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -24,8 +25,13 @@ public class FileUtils {
       return new FileSystemResource(resourceUrl);
    }
 
+   @Deprecated(since = "2.0", forRemoval = true)
    public static Resource LOAD_FILE_FROM_CLASSPATH(String resourceUrl) {
       return new ClassPathResource(resourceUrl);
+   }
+
+   public static InputStream INPUT_STREAM_FROM_CLASSPATH(String classPathResourceUrl) throws IOException {
+      return LOAD_FILE_FROM_CLASSPATH(classPathResourceUrl).getInputStream();
    }
 
 }

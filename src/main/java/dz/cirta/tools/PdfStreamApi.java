@@ -19,9 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,11 +27,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class PdfStreamApi {
    private static final Logger logger = LoggerFactory.getLogger(PdfStreamApi.class);
 
+   @Deprecated(since = "2.0", forRemoval = true)
    public static boolean splitPdfFile(final int start, final int end, final String source) throws IOException {
       Resource resource = FileUtils.LOAD_FILE_FROM_CLASSPATH(source);
       PDDocument pdf = PDDocument.load(resource.getFile());
@@ -63,18 +63,20 @@ public final class PdfStreamApi {
    }
 
    public static void splitPdfToOutputStream(final int start, final int end, final String source, OutputStream outputStream) throws IOException {
-      Resource resource = FileUtils. LOAD_FILE_FROM_CLASSPATH(source);
-      PDDocument pdf = PDDocument.load(resource.getFile());
+      InputStream inputStream = FileUtils.INPUT_STREAM_FROM_CLASSPATH(source);
+      PDDocument pdf = PDDocument.load(inputStream);
       List<PDDocument> documents = getDefaultSplitter(start, end).split(pdf); // only one document, check start, end and at page parameters.
 
       if (documents.isEmpty()) {
          pdf.close();
+         inputStream.close();
          throw new IllegalArgumentException("end of file.");
       }
 
       documents.get(0).save(outputStream);
       documents.get(0).close();
       pdf.close();
+      inputStream.close();
    }
 
    public static List<Book> initializeBookProperties(final String pdfDocumentDirectory,
@@ -117,8 +119,8 @@ public final class PdfStreamApi {
          throw new IllegalArgumentException("books needs cover photo url.");
       }
 
-      Resource resource = FileUtils.LOAD_FILE_FROM_CLASSPATH(resourceUrl);
-      PDDocument doc = PDDocument.load(resource.getFile());
+      InputStream inputStream = FileUtils.INPUT_STREAM_FROM_CLASSPATH(resourceUrl);
+      PDDocument doc = PDDocument.load(inputStream);
       PDDocumentInformation pdfInformation = doc.getDocumentInformation();
 
       book.setPublisher(
@@ -151,17 +153,18 @@ public final class PdfStreamApi {
    }
 
    private static Map<String, List<Bookmark>> extractPdfBookmark(String resourceUrl) throws IOException {
-      Resource resource = FileUtils.LOAD_FILE_FROM_CLASSPATH(resourceUrl);
-      PDDocument doc = PDDocument.load(resource.getFile());
+      InputStream inputStream = FileUtils.INPUT_STREAM_FROM_CLASSPATH(resourceUrl);
+      PDDocument doc = PDDocument.load(inputStream);
       PDDocumentOutline pdfDocOutline = doc.getDocumentCatalog().getDocumentOutline();
 
       if (pdfDocOutline == null) {
-         throw new PdfSummaryNotFoundException("can't find any bookmark for book: " + resource.getFilename());
+         throw new PdfSummaryNotFoundException("can't find any bookmark for book: " +resourceUrl);
       }
 
       Map<String, List<Bookmark>> result = mapTitlesToPages(pdfDocOutline.getFirstChild(), doc); // bookmark node
 
       doc.close();
+      inputStream.close();
       return result;
    }
 
@@ -208,12 +211,12 @@ public final class PdfStreamApi {
    }
 
    private static synchronized List<SummaryItem> extractSummary(String resourceUrl, Book book) throws IOException {
-      Resource resource = FileUtils.LOAD_FILE_FROM_CLASSPATH(resourceUrl);
-      PDDocument doc = PDDocument.load(resource.getFile());
+      InputStream inputStream = FileUtils.INPUT_STREAM_FROM_CLASSPATH(resourceUrl);
+      PDDocument doc = PDDocument.load(inputStream);
       PDDocumentOutline pdfDocOutline = doc.getDocumentCatalog().getDocumentOutline();
 
       if (pdfDocOutline == null) {
-         throw new PdfSummaryNotFoundException("can't find any bookmark for book: " + resource.getFilename());
+         throw new PdfSummaryNotFoundException("can't find any bookmark for book: " + resourceUrl);
       }
 
       List<SummaryItem> all = new ArrayList<>();
@@ -275,8 +278,22 @@ public final class PdfStreamApi {
    }
 
    private static List<String> lines(String coverPhotoFileNameMappingSourceFileUrl) throws IOException {
-      File file = FileUtils.LOAD_FILE_FROM_CLASSPATH(coverPhotoFileNameMappingSourceFileUrl).getFile();
-      return file.exists() && file.isFile() ?  Files.readAllLines(file.toPath()) : Arrays.asList();
+      final List<String> lines = new ArrayList<>();
+
+      try (
+            BufferedReader bufferedReader = new BufferedReader(
+                  new InputStreamReader(
+                     FileUtils.INPUT_STREAM_FROM_CLASSPATH(coverPhotoFileNameMappingSourceFileUrl)
+                  )
+            );
+            Stream<String> stream = bufferedReader.lines()
+      ) {
+         lines.addAll(stream.collect(Collectors.toList()));
+      } catch (IOException ex) {
+         throw ex;
+      }
+
+      return lines;
    }
 
    private static Splitter getDefaultSplitter(final int start, final int end) {
