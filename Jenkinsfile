@@ -41,6 +41,23 @@ pipeline {
       }
     }
 
+    stage('deploy') {
+      steps {
+        script {
+          def imageName = "cirta-social-${params.environment}-dockerfile"
+          echo "image name is : $imageName"
+          projectVersion = sh (script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
+          sh "echo COPY dz.cirta.cirta-social-${env.projectVersion}.jar  /appli/cirta-social-${env.projectVersion}.jar >> $imageName  "
+          sh "echo CMD java -jar /appli/cirta-social-${env.projectVersion}.jar ${params.environment} >> $imageName"
+          echo "extracted version: $projectVersion"
+          dockerImage = docker.build("abdessamed/cirta-social:$projectVersion", "-f $imageName .")
+          withDockerRegistry(credentialsId: 'docker-hub') {
+            dockerImage.push()
+          }
+        }
+      }
+    }
+
     stage('test') {
       steps {
         sh "mvn --fail-never test"
@@ -65,21 +82,6 @@ pipeline {
     stage('package') {
       steps {
         sh "mvn package"
-      }
-    }
-
-    stage('deploy') {
-      steps {
-        script {
-          def imageName = "cirta-social-${params.environment}-dockerfile"
-          echo "image name is : $imageName"
-          projectVersion = sh (script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
-          echo "extracted version: $projectVersion"
-          dockerImage = docker.build("abdessamed/cirta-social:$env.projectVersion", "-f $imageName .")
-          withDockerRegistry(credentialsId: 'docker-hub') {
-            dockerImage.push()
-          }
-        }
       }
     }
 
