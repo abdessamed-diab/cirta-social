@@ -57,7 +57,7 @@ pipeline {
 
     stage('package') {
       steps {
-        sh "mvn -q site:site -q package"
+        sh "mvn -q site:site -q -Dmaven.test.skip=true package"
       }
     }
 
