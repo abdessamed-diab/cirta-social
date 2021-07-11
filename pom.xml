@@ -5,8 +5,9 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>dz.cirta</groupId>
-    <artifactId>dz.cirta.cirta-social</artifactId>
+    <artifactId>cirta-social</artifactId>
     <version>2.0-RC1</version>
+    <name>cirta-social</name>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -17,26 +18,45 @@
 
     <!-- todo ad -->
     <organization>
-        <name>rahba.net</name>
-        <url>https://rahba.net/</url>
+        <name>cirta.app</name>
+        <url>https://cirta.app/</url>
     </organization>
 
     <!-- todo ad -->
     <ciManagement>
-        <url>https://720016e0cb14.ngrok.io/</url>
+        <url>https://abaac80d182c.ngrok.io/job/cirta-social/job/cirta-social-release/</url>
         <notifiers>
             <notifier>
-                <type>push</type>
+                <type>email</type>
+                <address>abdessamed.diab@gmail.com</address>
+                <sendOnError>true</sendOnError>
                 <sendOnFailure>true</sendOnFailure>
             </notifier>
         </notifiers>
         <system>jenkins</system>
     </ciManagement>
 
-    <!-- todo ad -->
+    <!--https://maven.apache.org/plugins/maven-site-plugin/usage.html#Generating_a_Site-->
+    <!--deploy a site to remote server using scp protocol-->
+    <distributionManagement>
+        <site>
+            <id>cirta.app</id>
+            <url>scp://cirta.app/${project.version}/doc/</url>
+        </site>
+    </distributionManagement>
+
     <scm>
-        <url>scm:git:https://github.com/abdessamed-diab/API/tree/feat-blog-api</url>
+        <url>https://github.com/abdessamed-diab/cirta-social.git</url>
     </scm>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <distribution>repo</distribution>
+            <url>https://raw.githubusercontent.com/abdessamed-diab/cirta-social/master/LICENSE</url>
+            <comments>${project.name} is open source (CaaS) software</comments>
+        </license>
+    </licenses>
 
     <!-- todo ad -->
     <developers>
@@ -53,7 +73,7 @@
             <name>DIAB Abdessamed</name>
             <email>abdessamed.diab@gmail.com</email>
             <url>https://rahba.net/</url>
-            <organization>rahba.net</organization>
+            <organization>cirta.app</organization>
         </contributor>
     </contributors>
 
@@ -176,6 +196,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <version>3.7.1</version>
+                <configuration>
+                    <outputDirectory>${project.basedir}/src/main/resources/public/pages/${project.version}/doc/</outputDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.8</version>
             </plugin>
         </plugins>
     </build>
@@ -208,11 +236,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
-    <!-- todo ad -->
     <description>
-        the main purpose behind creating ths pet-project is in short to automate it's build process.
-        in this example, i created a declarative pipeline within jenkins in order to build and generate the artifact from source code.
-        you can visit and check out all build stages such as packaging, testing and deploying to a remote server.
+        cirta-social is a Container as a Service (CaaS) software running on AWS cloud platform, with basic requirements: streaming books and query data based on full text search criteria.
     </description>
 
 </project>

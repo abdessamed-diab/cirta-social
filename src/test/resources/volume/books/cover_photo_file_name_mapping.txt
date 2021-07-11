@@ -1,6 +1,1 @@
-spring-boot-reference.pdf=volume/subjects/2.jpg
 spring-social-reference.pdf=volume/subjects/2.jpg
-hibernate_reference.pdf=volume/subjects/5.jpg
-progit.pdf=volume/subjects/7.jpg
-The.Practice.of.System.and.Network.Administration.2nd.Edition.pdf=volume/subjects/6.jpg
-TLCL-19.pdf=volume/subjects/1.jpg

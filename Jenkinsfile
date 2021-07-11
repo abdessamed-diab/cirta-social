@@ -57,7 +57,7 @@ pipeline {
 
     stage('package') {
       steps {
-        sh "mvn package"
+        sh "mvn --offline -q site package"
       }
     }
 
@@ -65,15 +65,19 @@ pipeline {
       steps {
         script {
           def imageName = "cirta-social-${params.environment}-dockerfile"
-          echo "image name is : $imageName"
           projectVersion = sh (script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
-          echo "extracted version: $projectVersion"
-          sh "echo COPY target/dz.cirta.cirta-social-${projectVersion}.jar  /appli/cirta-social-${projectVersion}.jar >> $imageName  "
+          sh "echo COPY target/cirta-social-${projectVersion}.jar  /appli/cirta-social-${projectVersion}.jar >> $imageName  "
           sh "echo CMD java -jar /appli/cirta-social-${projectVersion}.jar ${params.environment} >> $imageName"
-          dockerImage = docker.build("abdessamed/cirta-social:$projectVersion", "-f $imageName .")
-          withDockerRegistry(credentialsId: 'docker-hub') {
-            dockerImage.push()
+
+          if (params.environment == 'release') {
+            dockerImage = docker.build("abdessamed/cirta-social:$projectVersion", "-f $imageName .")
+            withDockerRegistry(credentialsId: 'docker-hub') {
+              dockerImage.push()
+            }
+            echo "docker container run --rm -d -i -p 443:443 --hostname cirta-social-release --name cirta-social-release --cpus 0.5 abdessamed/cirta-social:$projectVersion"
           }
+
+
         }
       }
     }
