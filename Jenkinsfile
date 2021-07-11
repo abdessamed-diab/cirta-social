@@ -36,7 +36,7 @@ pipeline {
 
     stage('test') {
       steps {
-        sh "mvn -e compile --fail-never -e test"
+        sh "mvn -q compile --fail-never -e test"
         script {
           def summary = junit allowEmptyResults: true, healthScaleFactor: 2, testResults: 'target/surefire-reports/*.xml'
           def successPercentage = 100 -  (  ( 100 * summary.failCount / summary.totalCount) * 2  )
@@ -57,6 +57,7 @@ pipeline {
 
     stage('package') {
       steps {
+        sh "mvn dependency:go-offline site"
         sh "mvn --offline -q site package"
       }
     }
