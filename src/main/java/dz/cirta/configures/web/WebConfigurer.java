@@ -19,6 +19,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.web.servlet.resource.PathResourceResolver;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.util.UrlPathHelper;
 
@@ -65,6 +66,14 @@ public class WebConfigurer {
             registry.addViewController("/").setViewName("index");
             registry.addViewController("/privacy_policy").setViewName("privacy_policy");
             registry.addViewController("/terms_conditions").setViewName("terms_conditions");
+         }
+
+         @Override
+         public void addResourceHandlers(ResourceHandlerRegistry registry) {
+            registry.addResourceHandler("/doc/**")
+                  .addResourceLocations("classpath:/public/pages/2.0-RC1/doc/")
+                  .resourceChain(true)
+                  .addResolver(new PathResourceResolver());
          }
 
          @Override

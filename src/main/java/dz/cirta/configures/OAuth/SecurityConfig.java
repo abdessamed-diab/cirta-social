@@ -66,10 +66,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers("/signin/**", "/signup/**"        // service provider OAuth2.
                   , "/api/**"                                       // API we want to expose.
                   , "/public/**"                                    // static resource repository is permitted.
+                  , "/doc/**"                                    // static resource repository is permitted.
                   , "/*"                                            // welcome page url, privacy policy and terms and conditions.
             ).permitAll()
             .anyRequest().fullyAuthenticated()
             .and()
+            .headers().frameOptions().sameOrigin().and()
             .addFilterBefore(statelessAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
    }
 
