@@ -12,6 +12,16 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.elasticsearch.client</groupId>
+                <artifactId>elasticsearch-rest-client</artifactId>
+                <version>7.10.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-jpamodelgen</artifactId>
+                <version>5.4.26.Final</version>
+            </dependency>
+            <dependency>
                 <!-- https://docs.spring.io/spring-boot/docs/current/maven-plugin/reference/htmlsingle/-->
                 <!-- Import dependency management from Spring Boot -->
                 <groupId>org.springframework.boot</groupId>
@@ -179,6 +189,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.5.2</version>
                 <executions>
                     <execution>
                         <goals>
@@ -243,9 +254,6 @@
     </reporting>
 
     <properties>
-        <elasticsearch.version>7.10.0</elasticsearch.version>
-        <elasticsearch-rest-client.version>7.10.0</elasticsearch-rest-client.version>
-        <hibernate.version>5.4.26.Final</hibernate.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
