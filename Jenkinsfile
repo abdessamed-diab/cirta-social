@@ -36,7 +36,7 @@ pipeline {
 
     stage('test') {
       steps {
-        sh "mvn --fail-never test"
+        sh "mvn -e compile --fail-never -e test"
         script {
           def summary = junit allowEmptyResults: true, healthScaleFactor: 2, testResults: 'target/surefire-reports/*.xml'
           def successPercentage = 100 -  (  ( 100 * summary.failCount / summary.totalCount) * 2  )
