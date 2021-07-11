@@ -57,8 +57,7 @@ pipeline {
 
     stage('package') {
       steps {
-        sh "mvn -q dependency:go-offline"
-        sh "mvn --offline -q site -e package"
+        sh "mvn -q site:site -q package"
       }
     }
 
