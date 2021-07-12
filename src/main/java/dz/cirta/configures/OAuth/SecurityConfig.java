@@ -1,6 +1,5 @@
 package dz.cirta.configures.OAuth;
 
-import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -122,8 +121,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
    /**
     * this is the service provider we want to use, like facebook OAuth1 or OAuth2 service providers.
     * check spring social
-    *
-    * @return @{@link ProviderSignInController}
+    * @return {@link ProviderSignInController} front controller responsable of signing in users using OAuth2 open standard.
     */
    @Bean
    public ProviderSignInController providerSignInController() {
