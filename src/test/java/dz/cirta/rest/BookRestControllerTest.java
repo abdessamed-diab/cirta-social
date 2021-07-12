@@ -1,11 +1,11 @@
 package dz.cirta.rest;
 
-import dz.cirta.data.models.Book;
-import dz.cirta.data.models.CirtaAuthority;
-import dz.cirta.data.models.CirtaUser;
-import dz.cirta.data.models.Comment;
-import dz.cirta.data.repo.CirtaCommonsRepository;
-import dz.cirta.data.service.IBusinessLogic;
+import dz.cirta.store.models.Book;
+import dz.cirta.store.models.CirtaAuthority;
+import dz.cirta.store.models.CirtaUser;
+import dz.cirta.store.models.Comment;
+import dz.cirta.store.repo.CirtaCommonsRepository;
+import dz.cirta.service.IBusinessLogic;
 import org.hibernate.Session;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * integration tests.
+ * @author Abdessamed Diab
  */
 @SpringBootTest(
       webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,

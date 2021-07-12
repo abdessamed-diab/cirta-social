@@ -1,7 +1,7 @@
 package dz.cirta.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dz.cirta.configures.web.serializers.TempRequestBody;
+import dz.cirta.api.configures.web.serializers.TempRequestBody;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -15,6 +15,9 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * @author Abdessamed Diab
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "spring.profiles.active=dev")
 class LoginControllerTest {
     private static final Logger logger = LoggerFactory.getLogger(LoginControllerTest.class);

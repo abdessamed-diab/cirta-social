@@ -17,13 +17,28 @@ import org.springframework.core.annotation.Order;
 
 import javax.persistence.EntityManagerFactory;
 
-@SpringBootApplication(scanBasePackages = {"dz.cirta.configures.**", "dz.cirta.rest", "dz.cirta.data.**"})
+/**
+ * entry point of launching all necessary beans and bootstrap <a href="https://cirta.app">cirta.app (CaaS)</a>
+ * <br> class used to bootstrap and launch an instance of {@link ConfigurableApplicationContext}, <br>
+ * three packages need to be loaded on startup, api package covering front controllers, service package exposing all needed operations <br>
+ * and a repository package for interaction with the database. <br>
+ * on startup, in production environment, initializing elasticsearch cluster is mandatory {@link dz.cirta.service.BusinessLogic} <br>
+ * add admin user to database on startup is required to administer, operate and manage database. {@link org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration}
+ * @author Abdessamed Diab
+ * @version 2.0
+ * @since 1.0
+ */
+@SpringBootApplication(scanBasePackages = {"dz.cirta.api.**", "dz.cirta.service","dz.cirta.store.repo"})
 public class Main {
    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
    @Autowired
    private EntityManagerFactory entityManagerFactory;
 
+   /**
+    * launch spring boot application using {@link Main} class as annotation based configuration class.
+    * @param args env variables contains at least active profile dev, release or production
+    */
    public static void main(String[] args) {
       SpringApplication springApplication = new SpringApplication(Main.class);
       springApplication.setLazyInitialization(false);
