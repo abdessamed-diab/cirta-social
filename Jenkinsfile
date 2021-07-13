@@ -34,16 +34,6 @@ pipeline {
       }
     }
 
-    stage('aws') {
-      steps {
-        script {
-          docker.withRegistry("https://384310696216.dkr.ecr.eu-west-2.amazonaws.com", "ecr:eu-west-2:credential-id") {
-            docker.image("cirta-social:2.0-RC1").push()
-          }
-        }
-      }
-    }
-
     stage('test') {
       steps {
         sh "mvn -q compile --fail-never -e test"
@@ -87,6 +77,12 @@ pipeline {
             echo "docker container run --rm -d -i -p 443:443 --hostname cirta-social-release --name cirta-social-release --cpus 0.5 abdessamed/cirta-social:$projectVersion"
           }
 
+
+          if (params.environment == 'production') {
+            docker.withRegistry('https://384310696216.dkr.ecr.eu-west-2.amazonaws.com', 'eu_west_2_credential_id') {
+              docker.image("$imageName").push()
+            }
+          }
 
         }
       }
