@@ -77,11 +77,10 @@ pipeline {
             echo "docker container run --rm -d -i -p 443:443 --hostname cirta-social-release --name cirta-social-release --cpus 0.5 abdessamed/cirta-social:$projectVersion"
           }
 
-
           if (params.environment == 'production') {
-            docker.withRegistry('https://384310696216.dkr.ecr.eu-west-2.amazonaws.com', 'eu_west_2_credential_id') {
-              docker.image("$imageName").push()
-            }
+            sh "aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 384310696216.dkr.ecr.eu-west-2.amazonaws.com "
+            sh "docker tag abdessamed/cirta-social:$projectVersion 384310696216.dkr.ecr.eu-west-2.amazonaws.com/cirta-social:$projectVersion"
+            sh "docker push 384310696216.dkr.ecr.eu-west-2.amazonaws.com/cirta-social:$projectVersion"
           }
 
         }
