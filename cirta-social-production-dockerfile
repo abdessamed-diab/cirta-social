@@ -6,7 +6,7 @@ RUN apk  add --no-cache openjdk11-jre
 # create appli directory
 RUN mkdir -p  /appli
 
-COPY src/main/resources/certs/production-certificate /appli/
+COPY src/main/resources/certs/production-certificate /appli/production-certificate
 
 # copy artifact from host to container
 # COPY dz.cirta.cirta-social-2.0-SNAPSHOT.jar  /appli/cirta-social-2.0-SNAPSHOT.jar
