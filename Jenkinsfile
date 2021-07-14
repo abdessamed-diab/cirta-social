@@ -68,9 +68,9 @@ pipeline {
           projectVersion = sh (script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
           sh "echo COPY target/cirta-social-${projectVersion}.jar  /appli/cirta-social-${projectVersion}.jar >> $imageName  "
           sh "echo CMD java -jar /appli/cirta-social-${projectVersion}.jar ${params.environment} >> $imageName"
+          dockerImage = docker.build("abdessamed/cirta-social:$projectVersion", "-f $imageName .")
 
           if (params.environment == 'release') {
-            dockerImage = docker.build("abdessamed/cirta-social:$projectVersion", "-f $imageName .")
             withDockerRegistry(credentialsId: 'docker-hub') {
               dockerImage.push()
             }
