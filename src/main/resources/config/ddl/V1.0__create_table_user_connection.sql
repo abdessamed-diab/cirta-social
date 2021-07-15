@@ -24,7 +24,7 @@ create table cirta_user (
     id bigint not null,
     facebook_id varchar(255),
     first_name varchar(255) not null,
-    language tinyint,
+    language tinyint not null,
     last_name varchar(255) not null,
     name varchar(255) not null,
     password varchar(255),

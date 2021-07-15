@@ -49,7 +49,7 @@ public class CirtaUser implements UserDetails, Comparable<CirtaUser> {
    @JsonIgnore
    transient private boolean enabled = true;
 
-   @Column
+   @Column(nullable = false)
    private byte language;
 
    @ManyToMany(fetch = FetchType.EAGER)

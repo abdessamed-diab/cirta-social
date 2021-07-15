@@ -1,11 +1,10 @@
-package dz.cirta.rest;
+package dz.cirta.api;
 
 import dz.cirta.store.models.Book;
 import dz.cirta.store.models.CirtaAuthority;
 import dz.cirta.store.models.CirtaUser;
 import dz.cirta.store.models.Comment;
 import dz.cirta.store.repo.CirtaCommonsRepository;
-import dz.cirta.service.IBusinessLogic;
 import org.hibernate.Session;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,8 +41,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
       webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
       properties = "spring.profiles.active=dev"
 )
-class BookRestControllerTest {
-    private static final Logger logger = LoggerFactory.getLogger(BookRestControllerTest.class);
+class SubjectControllerTest {
+    private static final Logger logger = LoggerFactory.getLogger(SubjectControllerTest.class);
     private MockMvc mockMvc;
 
     @Value("${dz.cirta.app.volume}")
@@ -58,19 +57,15 @@ class BookRestControllerTest {
     @Autowired
     private CirtaCommonsRepository cirtaCommonsRepository;
 
-    @Autowired
-    private IBusinessLogic businessLogic;
-
     @BeforeEach
     public void beforeEach(WebApplicationContext webApplicationContext) {
-        // mockMvc = MockMvcBuilders.standaloneSetup(new BookRestController()).build(); we have filters to configure, we need to pass to integration testing.
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
     @Test
     public void testStreamBookByBookId() throws Exception {
         mockMvc.perform(
-                get("/book/stream/{bookId}", new Long(1))
+                get("/subject/book/{bookId}/stream", new Long(1))
                 .header("Authorization", "Bearer 34i3j4iom2323==")
                 .contentType(MediaType.APPLICATION_JSON_VALUE) // consume
                 .accept(MediaType.APPLICATION_OCTET_STREAM_VALUE) // produce
@@ -85,7 +80,7 @@ class BookRestControllerTest {
         int startPage = 150; // arg2
 
         mockMvc.perform(
-                get("/book/stream/{bookId}/{startPage}", bookId, startPage)
+                get("/subject/book/{bookId}/stream/{startPage}", bookId, startPage)
                         .header("Authorization", "Bearer 34i3j4iom2323==")
                         .contentType(MediaType.APPLICATION_JSON_VALUE) // consume
                         .accept(MediaType.APPLICATION_OCTET_STREAM_VALUE) // produce
@@ -100,7 +95,7 @@ class BookRestControllerTest {
         int startPage = 1; // arg2
 
         mockMvc.perform(
-                get("/book/stream/{bookId}/{startPage}", bookId, startPage)
+                get("/subject/book/{bookId}/stream/{startPage}", bookId, startPage)
                         .header("Authorization", "Bearer 34i3j4iom2323==")
                         .contentType(MediaType.APPLICATION_JSON_VALUE) // consume
                         .accept(MediaType.APPLICATION_OCTET_STREAM_VALUE) // produce
@@ -116,7 +111,7 @@ class BookRestControllerTest {
         assumeTrue(!books.isEmpty());
         Long bookId = books.iterator().next().getId();
         String bookmark = mockMvc.perform(
-                get("/book/bookmark/{bookId}", bookId)
+                get("/subject/book/{bookId}/bookmark", bookId)
                         .header("Authorization", "Bearer 34i3j4iom2323==")
                         .contentType(MediaType.APPLICATION_JSON_VALUE) // consume
                         .accept(MediaType.APPLICATION_JSON_VALUE) // produce
@@ -132,7 +127,7 @@ class BookRestControllerTest {
     public void testExtractBookmarkNotAcceptable() throws Exception {
         Long bookId = 13L; // arg1 book does not exist.
         mockMvc.perform(
-                get("/book/bookmark/{bookId}", bookId)
+                get("/subject/book/{bookId}/bookmark", bookId)
                         .header("Authorization", "Bearer 34i3j4iom2323==")
                         .contentType(MediaType.APPLICATION_JSON_VALUE) // consume
                         .accept(MediaType.APPLICATION_JSON_VALUE) // produce
@@ -169,7 +164,7 @@ class BookRestControllerTest {
         hibernateSession.getTransaction().commit();
         String content = myMappingJackson2HttpMessageConverter.getObjectMapper().writeValueAsString(comment);
         String result = mockMvc.perform(
-                post("/book/{bookId}/comment", book.getId())
+                post("/subject/book/{bookId}/comment", book.getId())
                         .header("Authorization", "Bearer 34i3j4iom2323==")
                         .contentType(MediaType.APPLICATION_JSON_VALUE) // consume
                         .accept(MediaType.APPLICATION_JSON_VALUE) // produce
@@ -183,7 +178,7 @@ class BookRestControllerTest {
         assertNotNull(postedComment.getId());
 
         String fetch = mockMvc.perform(
-                get("/book/{bookId}/comments/{pageNumber}", book.getId(), 13)
+                get("/subject/book/{bookId}/comments/{pageNumber}", book.getId(), 13)
                         .header("Authorization", "Bearer 34i3j4iom2323==")
                         .contentType(MediaType.APPLICATION_JSON_VALUE) // consume
                         .accept(MediaType.APPLICATION_JSON_VALUE) // produce

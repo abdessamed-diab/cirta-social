@@ -96,7 +96,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
    @Bean
    public StatelessAuthenticationFilter statelessAuthenticationFilter() throws Exception {
-      OrRequestMatcher or = new OrRequestMatcher(new AntPathRequestMatcher("/book/**"), new AntPathRequestMatcher("/search/**"));
+      OrRequestMatcher or = new OrRequestMatcher(new AntPathRequestMatcher("/subject/**"), new AntPathRequestMatcher("/search/**"));
       StatelessAuthenticationFilter statelessAuthenticationFilter = new StatelessAuthenticationFilter(or);
       statelessAuthenticationFilter.setAuthenticationManager(authenticationManagerBean());
       return statelessAuthenticationFilter;

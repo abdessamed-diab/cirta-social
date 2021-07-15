@@ -74,7 +74,7 @@ public class WebConfigurer {
          @Override
          public void addResourceHandlers(ResourceHandlerRegistry registry) {
             registry.addResourceHandler("/doc/**")
-                  .addResourceLocations("classpath:/public/pages/2.0-RC1/doc/")
+                  .addResourceLocations("classpath:/public/pages/doc/")
                   .resourceChain(true)
                   .addResolver(new PathResourceResolver());
          }

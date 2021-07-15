@@ -5,7 +5,6 @@ import dz.cirta.api.configures.web.converters.BookmarksConverter;
 import dz.cirta.api.configures.web.serializers.ResourceToBase64;
 
 import javax.persistence.*;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +14,7 @@ import java.util.Map;
  */
 @Entity
 @JsonSerialize(using = ResourceToBase64.class)
-public class Book implements Serializable {
+public class Book implements Subject {
 
    @Id
    @GeneratedValue(strategy = GenerationType.AUTO)
@@ -57,8 +56,14 @@ public class Book implements Serializable {
    @OneToMany(cascade = {CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "book", fetch = FetchType.LAZY)
    private List<SummaryItem> summaryItems;
 
+   @Override
    public long getId() {
       return id;
+   }
+
+   @Override
+   public String type() {
+      return TYPES.BOOK.type;
    }
 
    public void setId(long id) {

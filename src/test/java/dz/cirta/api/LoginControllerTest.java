@@ -1,4 +1,4 @@
-package dz.cirta.rest;
+package dz.cirta.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dz.cirta.api.configures.web.serializers.TempRequestBody;

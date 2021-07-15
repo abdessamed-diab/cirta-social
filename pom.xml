@@ -6,8 +6,8 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>dz.cirta</groupId>
     <artifactId>cirta-social</artifactId>
-    <version>2.0-RC1</version>
-    <name>cirta-social</name>
+    <version>2.0</version>
+    <name>cirta.app cirta-social reference</name>
 
     <dependencyManagement>
         <dependencies>
@@ -41,7 +41,7 @@
 
     <!-- todo ad -->
     <ciManagement>
-        <url>https://abaac80d182c.ngrok.io/job/cirta-social/job/cirta-social-release/</url>
+        <url>https://${ngrok_sub_domain}.ngrok.io/job/cirta-social/job/cirta-social-release/</url>
         <notifiers>
             <notifier>
                 <type>email</type>
@@ -222,7 +222,7 @@
                 <artifactId>maven-site-plugin</artifactId>
                 <version>3.7.1</version>
                 <configuration>
-                    <outputDirectory>${project.basedir}/src/main/resources/public/pages/${project.version}/doc/</outputDirectory>
+                    <outputDirectory>${project.basedir}/src/main/resources/public/pages/doc/${project.version}/</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -251,7 +251,7 @@
                 <version>3.1.1</version>
                 <configuration>
                     <linkJavadoc>true</linkJavadoc>
-                    <javadocDir>${project.basedir}/src/main/resources/public/pages/${project.version}/doc/api/</javadocDir>
+                    <javadocDir>${project.basedir}/src/main/resources/public/pages/doc/${project.version}/api/</javadocDir>
                 </configuration>
             </plugin>
             <plugin>
@@ -259,17 +259,22 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
-                    <outputDirectory>${project.basedir}/src/main/resources/public/pages/${project.version}/doc/api/</outputDirectory>
-                    <reportOutputDirectory>${project.basedir}/src/main/resources/public/pages/${project.version}/doc/api/</reportOutputDirectory>
+                    <outputDirectory>${project.basedir}/src/main/resources/public/pages/doc/${project.version}/api/</outputDirectory>
+                    <reportOutputDirectory>${project.basedir}/src/main/resources/public/pages/doc/${project.version}/api/</reportOutputDirectory>
                     <author>true</author>
                     <debug>true</debug>
                     <destDir>api</destDir>
                     <detectJavaApiLink>true</detectJavaApiLink>
                     <detectLinks>true</detectLinks>
                     <failOnError>false</failOnError>
-                    <!-- <header>"<b>${project.name}</b>: (CaaS) ${project.version}" cirta.app</header>-->
+                    <header>
+                        <![CDATA[<b>${project.name}</b>: (CaaS) ${project.version}" on AWS EC2 ]]>
+                    </header>
                     <locale>en</locale>
                     <show>private</show>
+                    <level>private</level>
+                    <additionalJOption>--no-module-directories</additionalJOption>
+                    <includeDependencySources>false</includeDependencySources>
                 </configuration>
             </plugin>
         </plugins>
@@ -278,10 +283,12 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <ngrok_sub_domain>481db6471f8a</ngrok_sub_domain>
     </properties>
 
     <description>
-        cirta-social is a Container as a Service (CaaS) software running on AWS cloud platform, with basic requirements: streaming books and query data based on full text search criteria.
+        cirta-social is a Container as a Service (CaaS) software running on AWS cloud platform.
+        cirta-social as its name suggests, is an online social media platform uses Facebook projects to allow members of the same group to interact with each other over a customizable content.
     </description>
 
 </project>

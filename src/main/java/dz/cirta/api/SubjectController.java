@@ -34,9 +34,9 @@ import java.util.*;
  * @author Abdessamed Diab
  */
 @RestController
-@RequestMapping(path = "/book")
-public class BookRestController implements SocialIntegration {
-   private static final Logger logger = LoggerFactory.getLogger(BookRestController.class);
+@RequestMapping(path = "/subject")
+public class SubjectController implements SocialIntegration {
+   private static final Logger logger = LoggerFactory.getLogger(SubjectController.class);
 
    @Autowired
    private UsersConnectionRepository usersConnectionRepository;
@@ -45,18 +45,15 @@ public class BookRestController implements SocialIntegration {
    @Autowired
    private Session hibernateSession;
 
-   @Autowired(required = false)
-   private ConnectionRepository connectionRepository;
-
-   // TODO ad you should implement real favorite books.
+   // TODO ad you should implement real favorite subjects.
    @GetMapping(path = "/favorites/{userId}", produces = MediaType.APPLICATION_JSON_VALUE, headers = {"Authorization"})
-   public List<Book> favoriteBooks(@PathVariable(name = "userId", required = false) String id, Locale locale,
-                                   @RequestHeader(name = "Authorization") String authorization) {
+   public <T extends Subject> List<T> favoriteSubjects(@PathVariable(name = "userId", required = false) String id, Locale locale,
+                                                      @RequestHeader(name = "Authorization") String authorization) {
 
-      return (List<Book>) hibernateSession.createNativeQuery("SELECT * FROM book", Book.class).getResultList();
+      return (List<T>) hibernateSession.createNativeQuery("SELECT * FROM book", Book.class).getResultList();
    }
 
-   @GetMapping(path = "/stream/{bookId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+   @GetMapping(path = "/book/{bookId}/stream", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
    public ResponseEntity<StreamingResponseBody> streamBookByBookId(
          @PathVariable(name = "bookId", required = true) Long bookId,
          @RequestHeader(required = true, name = "source-url") final String sourceUrl) {
@@ -78,7 +75,7 @@ public class BookRestController implements SocialIntegration {
    }
 
    // TODO ad bug detected after calling this method over and over, hikari connection pool leak, the problem is related with findById DAO service, perhaps transaction!
-   @GetMapping(path = "/stream/{bookId}/{startPage}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+   @GetMapping(path = "/book/{bookId}/stream/{startPage}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
    public StreamingResponseBody streamPagesOfBook(
          @PathVariable(name = "bookId", required = true) final Long bookId,
          @PathVariable(name = "startPage", required = true) final int startPage,
@@ -96,7 +93,7 @@ public class BookRestController implements SocialIntegration {
       };
    }
 
-   @GetMapping(path = "/bookmark/{bookId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+   @GetMapping(path = "/book/{bookId}/bookmark", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
    public ResponseEntity<Map<String, List<Bookmark>>> extractBookmark(@PathVariable(required = true, name = "bookId") Long bookId,
                                                                       @RequestHeader(required = true, name = "source-url") String sourceUrl) {
 
@@ -122,7 +119,7 @@ public class BookRestController implements SocialIntegration {
       return usersConnectionRepository.createConnectionRepository(authentication.getName());
    }
 
-   @PostMapping(path = "/{bookId}/comment", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+   @PostMapping(path = "/book/{bookId}/comment", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
    public ResponseEntity<Comment> postComment(@PathVariable(name = "bookId", required = true) final long bookId,
                                               @RequestBody final Comment comment) {
 
@@ -145,7 +142,7 @@ public class BookRestController implements SocialIntegration {
       }
    }
 
-   @GetMapping(path = "/{bookId}/comments/{pageNumber}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+   @GetMapping(path = "/book/{bookId}/comments/{pageNumber}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
    public ResponseEntity<List<Comment>> fetchPageComments(@PathVariable(name = "bookId", required = true) final long bookId,
                                                           @PathVariable(name = "pageNumber", required = true) final int pageNumber) {
 
