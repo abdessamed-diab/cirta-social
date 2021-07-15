@@ -7,7 +7,7 @@
     <groupId>dz.cirta</groupId>
     <artifactId>cirta-social</artifactId>
     <version>2.0</version>
-    <name>cirta.app cirta-social reference</name>
+    <name>cirta-social doc</name>
 
     <dependencyManagement>
         <dependencies>
@@ -80,7 +80,7 @@
         <developer>
             <name>DIAB Abdessamed</name>
             <email>abdessamed.diab@gmail.com</email>
-            <url>https://rahba.net</url>
+            <url>https://mobile.cirta.app/</url>
         </developer>
     </developers>
 
@@ -89,7 +89,7 @@
         <contributor>
             <name>DIAB Abdessamed</name>
             <email>abdessamed.diab@gmail.com</email>
-            <url>https://rahba.net/</url>
+            <url>https://mobile.cirta.app/</url>
             <organization>cirta.app</organization>
         </contributor>
     </contributors>

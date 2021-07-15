@@ -35,7 +35,7 @@ public class SignInProviderConfigurer {
    @Autowired
    private UsersConnectionRepository usersConnectionRepository;
 
-   @Value("${rahba.net.dns}")
+   @Value("${mobile.cirta.app.dns}")
    private String frontEndDns;
 
    @Bean(name = "signInAdapter")

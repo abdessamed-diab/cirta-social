@@ -46,7 +46,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
    @Value("${spring.social.facebook.appSecret}")
    private String appSecret;
 
-   @Value("${rahba.net.dns}")
+   @Value("${mobile.cirta.app.dns}")
    private String frontEndDns;
 
    @Autowired
