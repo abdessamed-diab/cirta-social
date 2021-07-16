@@ -66,7 +66,8 @@ public class WebConfigurer {
 
          @Override
          public void addViewControllers(ViewControllerRegistry registry) {
-            registry.addViewController("/").setViewName("index");
+            registry.addViewController("/").setViewName("help");
+            registry.addViewController("/help").setViewName("help");
             registry.addViewController("/privacy_policy").setViewName("privacy_policy");
             registry.addViewController("/terms_conditions").setViewName("terms_conditions");
          }
