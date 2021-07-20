@@ -4,7 +4,6 @@ import dz.cirta.service.IBusinessLogic;
 import dz.cirta.store.models.CirtaAuthority;
 import dz.cirta.store.models.CirtaUser;
 import dz.cirta.store.models.TempAuthentication;
-import dz.cirta.service.BusinessLogic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
