@@ -1,8 +1,8 @@
 package dz.cirta.api;
 
+import dz.cirta.service.IBusinessLogic;
 import dz.cirta.store.models.*;
 import dz.cirta.store.tools.PdfStreamApi;
-import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,16 +41,15 @@ public class SubjectController implements SocialIntegration {
    @Autowired
    private UsersConnectionRepository usersConnectionRepository;
 
-   // TODO ad we should remove hibernateSession from front controllers.
    @Autowired
-   private Session hibernateSession;
+   private IBusinessLogic businessLogic;
 
    // TODO ad you should implement real favorite subjects.
    @GetMapping(path = "/favorites/{userId}", produces = MediaType.APPLICATION_JSON_VALUE, headers = {"Authorization"})
    public <T extends Subject> List<T> favoriteSubjects(@PathVariable(name = "userId", required = false) String id, Locale locale,
                                                       @RequestHeader(name = "Authorization") String authorization) {
 
-      return (List<T>) hibernateSession.createNativeQuery("SELECT * FROM book", Book.class).getResultList();
+      return (List<T>) businessLogic.findAllByClass(Book.class);
    }
 
    @GetMapping(path = "/book/{bookId}/stream", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -97,9 +96,7 @@ public class SubjectController implements SocialIntegration {
    public ResponseEntity<Map<String, List<Bookmark>>> extractBookmark(@PathVariable(required = true, name = "bookId") Long bookId,
                                                                       @RequestHeader(required = true, name = "source-url") String sourceUrl) {
 
-      Optional<Book> book = Optional.ofNullable(
-            hibernateSession.find(Book.class, bookId)
-      );
+      Optional<Book> book = businessLogic.findOptionalById(Book.class, Book_.ID, bookId);
 
       if (book.isPresent()) {
          return new ResponseEntity(new BookChartModalData(book.get().getBookAttributes()), HttpStatus.OK);
@@ -125,16 +122,16 @@ public class SubjectController implements SocialIntegration {
 
       try {
          comment.setPublishedAt(LocalDateTime.now());
-         comment.setBook(hibernateSession.getReference(Book.class, bookId));
+         comment.setBook(businessLogic.loadFromLocalCache(Book.class, bookId));
          comment.setParent(true);
          Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
          // TODO tou should remove next statement, we know that we have authentication, fix test.
          if (authentication != null && authentication.isAuthenticated()) {
             comment.setAuthor((CirtaUser) authentication.getPrincipal());
          }
-         hibernateSession.getTransaction().begin();
-         hibernateSession.save(comment);
-         hibernateSession.getTransaction().commit();
+
+         boolean isSaved = businessLogic.save(comment);
+
          return new ResponseEntity<>(comment, HttpStatus.CREATED);
       } catch (Exception ex) {
          logger.error(ex.getMessage(), ex);
@@ -143,20 +140,13 @@ public class SubjectController implements SocialIntegration {
    }
 
    @GetMapping(path = "/book/{bookId}/comments/{pageNumber}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-   public ResponseEntity<List<Comment>> fetchPageComments(@PathVariable(name = "bookId", required = true) final long bookId,
+   public ResponseEntity<Set<Comment>> fetchPageComments(@PathVariable(name = "bookId", required = true) final long bookId,
                                                           @PathVariable(name = "pageNumber", required = true) final int pageNumber) {
 
-      List<Comment> comments = hibernateSession.createQuery("select cs from Comment cs " +
-                  "where cs.book.id = :book and cs.pageNumber = :pageNumber " +
-                  "AND cs.parent = TRUE " +
-                  "ORDER BY cs.publishedAt DESC",
-            Comment.class)
-            .setParameter("book", bookId)
-            .setParameter("pageNumber", pageNumber)
-            .getResultList();
+      Collection<Comment> comments = businessLogic.findParentCommentsByGivenBookCoordinates(bookId, pageNumber);
 
       if (!comments.isEmpty()) {
-         return new ResponseEntity<List<Comment>>(comments, HttpStatus.OK);
+         return new ResponseEntity(new LinkedHashSet<>(comments), HttpStatus.OK);
       } else {
          return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
       }
@@ -166,16 +156,15 @@ public class SubjectController implements SocialIntegration {
    public ResponseEntity<TreeSet<Comment>> addCommentToParent(@PathVariable(name = "parentId", required = true) final Long parentId,
                                                               @RequestBody(required = true) final Comment comment) throws IOException {
 
-      Comment parent = hibernateSession.getReference(Comment.class, parentId);
+      Comment parent = businessLogic.findFetchOptionalById(Comment.class, Comment_.ID, parentId, Comment_.REPLIES, Comment_.BOOK).orElse(null);
       Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
       comment.setAuthor((CirtaUser) authentication.getPrincipal());
       comment.setPublishedAt(LocalDateTime.now());
       comment.setBook(parent.getBook());
       comment.setReplyNotification(Notification.CREATE_NOTIFICATION(parent.getBook(), comment));
       parent.addChild(comment);
-      hibernateSession.beginTransaction();
-      hibernateSession.saveOrUpdate(parent);
-      hibernateSession.getTransaction().commit();
+
+      businessLogic.saveOrUpdate(parent);
 
       Collections.sort(parent.getReplies());
       return new ResponseEntity(parent.getReplies(), HttpStatus.OK);

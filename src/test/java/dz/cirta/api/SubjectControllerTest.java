@@ -1,11 +1,10 @@
 package dz.cirta.api;
 
+import dz.cirta.service.IBusinessLogic;
 import dz.cirta.store.models.Book;
 import dz.cirta.store.models.CirtaAuthority;
 import dz.cirta.store.models.CirtaUser;
 import dz.cirta.store.models.Comment;
-import dz.cirta.store.repo.CirtaCommonsRepository;
-import org.hibernate.Session;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -21,12 +20,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -52,10 +53,7 @@ class SubjectControllerTest {
     private MappingJackson2HttpMessageConverter myMappingJackson2HttpMessageConverter;
 
     @Autowired
-    private Session hibernateSession;
-
-    @Autowired
-    private CirtaCommonsRepository cirtaCommonsRepository;
+    private IBusinessLogic businessLogic;
 
     @BeforeEach
     public void beforeEach(WebApplicationContext webApplicationContext) {
@@ -107,7 +105,7 @@ class SubjectControllerTest {
     @Test
     @WithMockUser(username = "tester", password = "rahba")
     public void testExtractBookmark() throws Exception {
-        Collection<Book> books = cirtaCommonsRepository.findAll(Book.class);
+        Collection<Book> books = businessLogic.findAllByClass(Book.class);
         assumeTrue(!books.isEmpty());
         Long bookId = books.iterator().next().getId();
         String bookmark = mockMvc.perform(
@@ -137,6 +135,7 @@ class SubjectControllerTest {
     }
 
     @Test
+    @Transactional
     public void testPostAndFetchComment() throws Exception {
         CirtaUser author = new CirtaUser("798546", "di ab", "abdes samed", "damy name");
         author.setLanguage((byte) 1); // dont use arabic localeDateTime pattern for testing.
@@ -146,7 +145,7 @@ class SubjectControllerTest {
                 )
         );
 
-        Collection<Book> books = cirtaCommonsRepository.findAll(Book.class);
+        Collection<Book> books = businessLogic.findAllByClass(Book.class);
         assumeTrue(!books.isEmpty());
 
         Book book = books.iterator().next();
@@ -159,9 +158,8 @@ class SubjectControllerTest {
         comment.setPublishedAt(LocalDateTime.now().minusMinutes(10));
 
 
-        hibernateSession.getTransaction().begin();
-        hibernateSession.save(author);
-        hibernateSession.getTransaction().commit();
+        businessLogic.save(author);
+
         String content = myMappingJackson2HttpMessageConverter.getObjectMapper().writeValueAsString(comment);
         String result = mockMvc.perform(
                 post("/subject/book/{bookId}/comment", book.getId())
@@ -177,7 +175,9 @@ class SubjectControllerTest {
         logger.info("posted comment: " + postedComment.getId());
         assertNotNull(postedComment.getId());
 
-        String fetch = mockMvc.perform(
+        List<Comment> test = businessLogic.findAllByClass(Comment.class);
+
+       String fetch = mockMvc.perform(
                 get("/subject/book/{bookId}/comments/{pageNumber}", book.getId(), 13)
                         .header("Authorization", "Bearer 34i3j4iom2323==")
                         .contentType(MediaType.APPLICATION_JSON_VALUE) // consume

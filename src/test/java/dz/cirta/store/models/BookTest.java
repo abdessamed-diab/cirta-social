@@ -1,7 +1,6 @@
 package dz.cirta.store.models;
 
-import dz.cirta.store.repo.CirtaCommonsRepository;
-import dz.cirta.service.BusinessLogic;
+import dz.cirta.service.IBusinessLogic;
 import dz.cirta.store.tools.PdfStreamApi;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +26,7 @@ class BookTest {
     private String volumeBaseDir;
 
     @Autowired
-    private BusinessLogic businessLogic;
-
-    @Autowired
-    private CirtaCommonsRepository cirtaCommonsRepository;
+    private IBusinessLogic businessLogic;
 
     @Test
     public void testFillBookMetaData() throws IOException {
@@ -48,7 +44,7 @@ class BookTest {
 
     @Test
     public void testLoadBooksWithSummariesToElasticSearchCluster() {
-        Collection<Book> books = cirtaCommonsRepository.findAll(Book.class);
+        Collection<Book> books = businessLogic.findAllByClass(Book.class);
         assertTrue(!books.isEmpty());
     }
 

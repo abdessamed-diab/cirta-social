@@ -1,13 +1,12 @@
 package dz.cirta.store.models;
 
-import dz.cirta.store.repo.CirtaUsersRepository;
+import dz.cirta.service.IBusinessLogic;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.GrantedAuthority;
 
-import javax.persistence.EntityManager;
-import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,10 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class CirtaEnumAuthorityTest {
 
     @Autowired
-    private CirtaUsersRepository cirtaUsersRepository;
-
-    @Autowired
-    private EntityManager hibernateSession;
+    private IBusinessLogic businessLogic;
 
     @Test
     public void testSaveUserWithAuthorities() {
@@ -33,20 +29,18 @@ class CirtaEnumAuthorityTest {
         cirtaUser.setFirstName("Abdessamed");
         cirtaUser.setLastName("DIAB");
 
-        hibernateSession.getTransaction().begin();
-        List<CirtaAuthority> authorities = hibernateSession
-                .createNativeQuery("select * from cirta_authority where authority in ('DEVELOPER', 'TESTER')", CirtaAuthority.class)
-                .getResultList();
-        cirtaUser.setAuthorities(new TreeSet<>(authorities));
-        hibernateSession.persist(cirtaUser);
-        hibernateSession.getTransaction().commit();
 
-        cirtaUser.setAuthorities(new TreeSet<>(authorities));
 
-        cirtaUser = cirtaUsersRepository.save(cirtaUser);
+        Set<CirtaAuthority> authorities = businessLogic.findAuthoritiesIn(CirtaAuthority.AuthorityEnum.DEVELOPER.label, CirtaAuthority.AuthorityEnum.TESTER.label);
+        cirtaUser.setAuthorities(authorities);
+        businessLogic.save(cirtaUser);
+
+        cirtaUser.setAuthorities(authorities);
+
+        businessLogic.saveOrUpdate(cirtaUser);
 
         assertEquals("DEVELOPER",
-                cirtaUsersRepository.findFirstByNameAndPassword(cirtaUser.getUsername(), cirtaUser.getPassword())
+                businessLogic.findUserByNameAndPassword(cirtaUser.getUsername(), cirtaUser.getPassword())
                 .getAuthorities().stream().filter(
                                 (GrantedAuthority cirtaAuthority) -> cirtaAuthority.getAuthority().equals("DEVELOPER")
                         ).findFirst().get().getAuthority()
@@ -61,13 +55,13 @@ class CirtaEnumAuthorityTest {
         cirtaUser.setFirstName("Abdessamed");
         cirtaUser.setLastName("DIAB");
 
-        cirtaUser = cirtaUsersRepository.save(cirtaUser);
+        businessLogic.save(cirtaUser);
 
-        CirtaUser result = cirtaUsersRepository.findFirstByNameAndPassword(cirtaUser.getUsername(), "what the hell");
+        CirtaUser result = businessLogic.findUserByNameAndPassword(cirtaUser.getUsername(), "what the hell");
 
         assertNull(result);
 
-        result = cirtaUsersRepository.findFirstByNameAndPassword(cirtaUser.getUsername(), cirtaUser.getPassword());
+        result = businessLogic.findUserByNameAndPassword(cirtaUser.getUsername(), cirtaUser.getPassword());
 
         assertEquals(cirtaUser.getPassword(), result.getPassword());
     }

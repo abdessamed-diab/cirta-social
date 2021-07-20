@@ -1,7 +1,8 @@
 package dz.cirta.api.configures.OAuth;
 
+import dz.cirta.service.IBusinessLogic;
 import dz.cirta.store.models.CirtaUser;
-import dz.cirta.store.repo.CirtaUsersRepository;
+import dz.cirta.store.models.CirtaUser_;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
@@ -30,7 +32,7 @@ public class StatelessAuthenticationFilter extends AbstractAuthenticationProcess
    private String secret;
 
    @Autowired
-   private CirtaUsersRepository cirtaUsersRepository;
+   private IBusinessLogic businessLogic;
 
    protected StatelessAuthenticationFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
       super(requiresAuthenticationRequestMatcher);
@@ -46,20 +48,24 @@ public class StatelessAuthenticationFilter extends AbstractAuthenticationProcess
          );
 
 
-      String subject = null;
+      String subject;
+      Authentication authentication;
       try {
          subject = extractSubjectFromJwt(authorizationHeader.substring(7));
-      } catch (JwtException | IllegalArgumentException ex) {
+
+         final Optional<CirtaUser> user = businessLogic.findOptionalById(CirtaUser.class, CirtaUser_.ID, Long.valueOf(subject).longValue());
+
+         authentication = new UsernamePasswordAuthenticationToken(
+               user.get(),
+               null,
+               user.get().getAuthorities() // because we have Lazy load.
+         );
+
+      } catch (JwtException | IllegalArgumentException | NoSuchElementException ex) {
+         logger.warn(ex);
          return redirectToFailingAuthentication(request, response,
                new BadCredentialsException(ex.getMessage()));
       }
-
-      final Optional<CirtaUser> user = cirtaUsersRepository.findById(Long.valueOf(subject));
-      Authentication authentication = new UsernamePasswordAuthenticationToken(
-            user.get(),
-            null,
-            user.get().getAuthorities() // because we have Lazy load.
-      );
 
       return this.getAuthenticationManager().authenticate(authentication);
    }

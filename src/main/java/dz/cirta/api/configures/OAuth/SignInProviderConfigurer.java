@@ -1,8 +1,9 @@
 package dz.cirta.api.configures.OAuth;
 
+import dz.cirta.service.IBusinessLogic;
+import dz.cirta.store.models.CirtaAuthority;
 import dz.cirta.store.models.CirtaUser;
 import dz.cirta.store.models.TempAuthentication;
-import dz.cirta.store.repo.CirtaUsersRepository;
 import dz.cirta.service.BusinessLogic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,10 +28,7 @@ import java.util.Optional;
 public class SignInProviderConfigurer {
 
    @Autowired
-   private CirtaUsersRepository cirtaUsersRepository;
-
-   @Autowired
-   private BusinessLogic businessLogic;
+   private IBusinessLogic businessLogic;
 
    @Autowired
    private UsersConnectionRepository usersConnectionRepository;
@@ -51,14 +49,14 @@ public class SignInProviderConfigurer {
             UserOperations userOperations = facebookTemplate.userOperations();
 
             CirtaUser cirtaUser = Optional.ofNullable(
-                  cirtaUsersRepository.findFirstByFacebookId(userOperations.getUserProfile().getId())
+                  businessLogic.findUserByFacebookId(userOperations.getUserProfile().getId())
             ).orElse(
                   fbUserToCirtaUser(userOperations.getUserProfile())
             );
 
             TempAuthentication tempAuthentication = new TempAuthentication(String.valueOf(Math.random() * 1000000));
             cirtaUser.setTempAuthentication(tempAuthentication);
-            cirtaUsersRepository.save(cirtaUser);
+            businessLogic.saveOrUpdate(cirtaUser);
 
             return frontEndDns + "/" + cirtaUser.getTempAuthentication().getKey();
          }
@@ -73,7 +71,9 @@ public class SignInProviderConfigurer {
             facebookTemplateUser.getName()
       );
 
-      cirtaUser.setAuthorities(businessLogic.findAuthoritiesIn());
+      cirtaUser.setAuthorities(businessLogic.findAuthoritiesIn(
+            CirtaAuthority.AuthorityEnum.DEVELOPER.label, CirtaAuthority.AuthorityEnum.TESTER.label
+      ));
       return cirtaUser;
    }
 }

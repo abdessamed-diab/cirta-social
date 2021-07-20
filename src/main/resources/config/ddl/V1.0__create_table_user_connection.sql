@@ -30,6 +30,7 @@ create table cirta_user (
     password varchar(255),
     profile_image varchar(500000),
     user_temp_auth bigint,
+    CONSTRAINT name_unique UNIQUE (name),
     primary key (id)
 );
 create unique index cirta_user_index on cirta_user(id, facebook_id, name);

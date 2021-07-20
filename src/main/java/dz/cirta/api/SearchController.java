@@ -1,11 +1,11 @@
 package dz.cirta.api;
 
 import dz.cirta.api.configures.web.serializers.SearchableSummaryItem;
+import dz.cirta.service.IBusinessLogic;
 import dz.cirta.store.models.CirtaUser;
+import dz.cirta.store.models.CirtaUser_;
 import dz.cirta.store.models.Notification;
 import dz.cirta.store.models.SummaryItem;
-import dz.cirta.service.BusinessLogic;
-import org.hibernate.Session;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +30,17 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
+ * base controller for handling search operations. Cirta-social uses elastic-search cluster to boost performance of text based search.
+ * some of the basic requirements that Cirta-social should deal with is finding the right subject. indexing phase is a must since the queries will be executed against search engine clusters and not on configured database.
+ * <br>when launching Cirta-social on production environment, hibernate search framework will drop all the shards from the cluster and starting indexing and sending back new records to elastic search cluster using Https protocol.
+ * <br>only one free cluster is used with two shards
  * @author Abdessamed Diab
+ * @since 1.0
+ * @see <a href="https://app.bonsai.io/login">bonsai.io</a> for more information on how allocating shards on a free cluster.
  */
 @RestController
 @RequestMapping(path = "/search")
@@ -49,10 +57,7 @@ public class SearchController implements SocialIntegration {
    private ConnectionRepository connectionRepository;
 
    @Autowired
-   private BusinessLogic dao;
-
-   @Autowired
-   private Session hibernateSession;
+   private IBusinessLogic businessLogic;
 
    @GetMapping(path = "/{toLowerCaseKeyword}", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
    public ResponseEntity<List<SearchableSummaryItem>> searchByKeyword(@PathVariable(required = true, name = "toLowerCaseKeyword") final String toLowerCaseKeyword) {
@@ -74,17 +79,16 @@ public class SearchController implements SocialIntegration {
          UserOperations userOperations = facebook.userOperations();
          String image = Base64.getEncoder().encodeToString(userOperations.getUserProfileImage());
          CirtaUser cirtaUser = (CirtaUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-         hibernateSession.beginTransaction();
-         CirtaUser user = hibernateSession.find(CirtaUser.class, cirtaUser.getId());
-         if (user != null) {
-            hibernateSession.createQuery("UPDATE CirtaUser cs SET cs.profileImage = :image WHERE cs.id = :id ")
-                  .setParameter("image", image).setParameter("id", user.getId()).executeUpdate();
+
+         Optional<CirtaUser> user = businessLogic.findOptionalById(CirtaUser.class, CirtaUser_.ID, cirtaUser.getId());
+         if (user.isPresent()) {
+            cirtaUser.setProfileImage(image);
+            businessLogic.update(cirtaUser);
          } else {
             cirtaUser.setProfileImage(image);
-            hibernateSession.save(cirtaUser);
+            businessLogic.save(cirtaUser);
          }
-         hibernateSession.getTransaction().commit();
-         hibernateSession.clear();
+
          return new ResponseEntity<>(
                new UserProfile(
                      userOperations.getUserProfile().getName(),
@@ -110,14 +114,8 @@ public class SearchController implements SocialIntegration {
    }
 
    @GetMapping(path = "/notifications/{username}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-   public ResponseEntity<List<Notification>> fetchNotifications(@PathVariable(name = "username", required = true) final String username) {
-      List<Notification> notifications = hibernateSession.createQuery("SELECT n FROM Notification n WHERE n.reply.parentComment.author.name = :username " +
-            "AND n.reply.author.name != :username " +
-            "AND n.reply.publishedAt > :minDate   " +
-            "ORDER BY n.reply.publishedAt DESC    ")
-            .setParameter("username", username)
-            .setParameter("minDate", LocalDateTime.now().minusMonths(3))
-            .getResultList();
+   public ResponseEntity<Set<Notification>> fetchNotifications(@PathVariable(name = "username", required = true) final String username) {
+      Set<Notification> notifications = businessLogic.fetchNotificationsByUsernameAndMinDate(username, LocalDateTime.now().minusMonths(3));
 
       return new ResponseEntity<>(notifications, HttpStatus.OK);
    }

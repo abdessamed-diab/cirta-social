@@ -1,9 +1,9 @@
 package dz.cirta.api;
 
 import dz.cirta.api.configures.web.serializers.TempRequestBody;
+import dz.cirta.service.IBusinessLogic;
 import dz.cirta.store.models.CirtaUser;
 import dz.cirta.store.models.DeletionRequestStatus;
-import dz.cirta.store.repo.CirtaUsersRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.slf4j.Logger;
@@ -63,10 +63,10 @@ public class LoginController {
    private Environment env;
 
    @Autowired
-   private CirtaUsersRepository cirtaUsersRepository;
+   private UsersConnectionRepository usersConnectionRepository;
 
    @Autowired
-   private UsersConnectionRepository usersConnectionRepository;
+   private IBusinessLogic businessLogic;
 
    /**
     * second step of authenticating a valid user.
@@ -81,9 +81,9 @@ public class LoginController {
          @RequestHeader(name = "language", required = true) final int language) {
 
       CirtaUser cirtaUser = Optional.ofNullable(
-            cirtaUsersRepository.findFirstByTempAuthentication_KeyAndTempAuthenticationNotNull(body.getKey())
+            businessLogic.findUserByTempAuthenticationKey(body.getKey())
       ).orElse(
-            cirtaUsersRepository.findFirstByNameAndPassword(body.getUsername(), body.getPassword())
+            businessLogic.findUserByNameAndPassword(body.getUsername(), body.getPassword())
       );
 
       final byte lang = (byte) (1 == language ? 1 : 0);
@@ -94,7 +94,7 @@ public class LoginController {
 
       cirtaUser.setTempAuthentication(null);
       cirtaUser.setLanguage((byte) language);
-      cirtaUsersRepository.save(cirtaUser);
+      businessLogic.saveOrUpdate(cirtaUser);
 
       return new ResponseEntity<AuthResponse>(new AuthResponse().setJwtToken(createTokenForUser(cirtaUser), lang), HttpStatus.OK);
    }
@@ -145,6 +145,10 @@ public class LoginController {
       return new DeletionRequestStatus("https://mobile.cirta.app", "200");
    }
 
+   /**
+    * when the user submitted bad Facebook credentials, automatically he should be redirected to login page.
+    * @return {@link RedirectView} representing login page.
+    */
    @GetMapping(path = "/signin*")
    public RedirectView redirectToIndex() {
       LoggerFactory.getLogger(getClass())

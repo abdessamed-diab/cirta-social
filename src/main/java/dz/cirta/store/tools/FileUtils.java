@@ -22,7 +22,7 @@ public class FileUtils {
     * convert a resource content to base64 format
     * @param resourceUrl fully qualified resource url
     * @return a text representing a resource fully encoded in base64.
-    * @throws IOException
+    * @throws IOException if no classpath file available with given supplied argument.
     */
    public static String ENCODE_FILE_CONTENT(String resourceUrl) throws IOException {
       byte[] fileContent = INPUT_STREAM_FROM_CLASSPATH(resourceUrl).readAllBytes();
@@ -50,7 +50,6 @@ public class FileUtils {
     * <br> consider getting resources from the classpath instead of filesystem for many reasons such as: all dependencies needs to be bundled within generated artifact.
     * @param classPathResourceUrl relative url to classpath, resources directory represent default classpath located under src subFolder
     * @return {@link InputStream} stream of bytes
-    * @throws IOException
     */
    public static InputStream INPUT_STREAM_FROM_CLASSPATH(String classPathResourceUrl) throws IOException {
       return LOAD_FILE_FROM_CLASSPATH(classPathResourceUrl).getInputStream();

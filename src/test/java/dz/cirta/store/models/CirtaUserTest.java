@@ -1,6 +1,5 @@
 package dz.cirta.store.models;
 
-import dz.cirta.store.repo.CirtaUsersRepository;
 import dz.cirta.service.BusinessLogic;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,16 +19,13 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 class CirtaUserTest {
 
     @Autowired
-    private CirtaUsersRepository cirtaUsersRepository;
-
-    @Autowired
     private BusinessLogic businessLogic;
 
     @Test
     public void testSave() {
         // test #1
         CirtaUser cirtaUser = new CirtaUser("what", "what", "what", "this is my name");
-        cirtaUser = cirtaUsersRepository.save(cirtaUser);
+        businessLogic.save(cirtaUser);
         assertNotNull(cirtaUser.getId());
 
         // test #2
@@ -43,7 +39,7 @@ class CirtaUserTest {
               authoritiesUsingCriteriaQuery
         );
 
-        cirtaUser2 = cirtaUsersRepository.save(cirtaUser2);
+        businessLogic.save(cirtaUser2);
         assertTrue(!cirtaUser2.getAuthorities().isEmpty());
     }
 
@@ -53,18 +49,18 @@ class CirtaUserTest {
         TempAuthentication tempAuthentication = new TempAuthentication("keyXXXXXXX");
         CirtaUser cirtaUser = new CirtaUser("what the hell", "what", "what", "what");
         cirtaUser.setTempAuthentication(tempAuthentication);
-        cirtaUser = cirtaUsersRepository.save(cirtaUser);
+        businessLogic.save(cirtaUser);
         assertEquals(tempAuthentication.getKey(), cirtaUser.getTempAuthentication().getKey());
 
         // test #2
         cirtaUser = Optional.of(
-                cirtaUsersRepository.findFirstByFacebookId(cirtaUser.getFacebookId())
+                businessLogic.findUserByFacebookId(cirtaUser.getFacebookId())
         ).orElse(
                 new CirtaUser("what the hell", "what", "what", "what")
         );
         TempAuthentication tempAuthentication_2 = new TempAuthentication("KeySecond");
         cirtaUser.setTempAuthentication(tempAuthentication_2);
-        cirtaUser = cirtaUsersRepository.save(cirtaUser);
+        businessLogic.saveOrUpdate(cirtaUser);
         assertEquals(tempAuthentication_2.getKey(), cirtaUser.getTempAuthentication().getKey());
     }
 
@@ -74,10 +70,12 @@ class CirtaUserTest {
         TempAuthentication tempAuthentication = new TempAuthentication("find first by temp key");
         CirtaUser cirtaUser = new CirtaUser("find first by temp key", "what", "what", "what ths is ");
         cirtaUser.setTempAuthentication(tempAuthentication);
-        cirtaUser = cirtaUsersRepository.save(cirtaUser);
-        assertEquals("find first by temp key", cirtaUsersRepository
-                .findFirstByTempAuthentication_KeyAndTempAuthenticationNotNull(tempAuthentication.getKey()).getFacebookId()
+        businessLogic.save(cirtaUser);
+        assertEquals("find first by temp key",
+              businessLogic.findUserByTempAuthenticationKey(
+                    tempAuthentication.getKey()).getFacebookId()
         );
+
     }
 
     @Test
@@ -93,7 +91,7 @@ class CirtaUserTest {
               authoritiesUsingCriteriaQuery
         );
 
-        cirtaUser = cirtaUsersRepository.save(cirtaUser);
+        businessLogic.save(cirtaUser);
         Set<CirtaAuthority> authoritiesByUserIdNativeSql = businessLogic.findAllByUser(cirtaUser.getId());
         List<CirtaAuthority> authoritiesByUserIdHqlQuery = businessLogic.findAllAuthoritiesByUserId(cirtaUser.getId());
 
@@ -112,10 +110,10 @@ class CirtaUserTest {
         TempAuthentication tempAuthentication = new TempAuthentication("key to drop");
         CirtaUser cirtaUser = new CirtaUser("drop temp auth", "what", "what", "what last");
         cirtaUser.setTempAuthentication(tempAuthentication);
-        cirtaUser = cirtaUsersRepository.save(cirtaUser);
+        businessLogic.saveOrUpdate(cirtaUser);
         cirtaUser.setTempAuthentication(null); // remove association with temp auth
-        cirtaUser = cirtaUsersRepository.save(cirtaUser);
-        assertNull(cirtaUsersRepository.findById(cirtaUser.getId()).get().getTempAuthentication());
-        assertNull(cirtaUsersRepository.findFirstByTempAuthentication_KeyAndTempAuthenticationNotNull(tempAuthentication.getKey()));
+        businessLogic.saveOrUpdate(cirtaUser);
+        assertNull(businessLogic.findOptionalById(CirtaUser.class, CirtaUser_.ID, cirtaUser.getId()).get().getTempAuthentication());
+        assertNull(businessLogic.findUserByTempAuthenticationKey(tempAuthentication.getKey()));
     }
 }

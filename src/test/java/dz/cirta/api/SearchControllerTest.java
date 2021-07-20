@@ -24,9 +24,6 @@ class SearchControllerTest {
     private static final Logger logger = LoggerFactory.getLogger(SearchControllerTest.class);
     private MockMvc mockMvc;
 
-    @Value("${dz.cirta.app.volume}")
-    private String volumeDirectory;
-
     @BeforeEach
     public void beforeEach(WebApplicationContext webApplicationContext) {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();

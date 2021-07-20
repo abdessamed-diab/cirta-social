@@ -1,7 +1,7 @@
 package dz.cirta;
 
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.slf4j.Logger;
@@ -14,6 +14,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.orm.hibernate5.HibernateTransactionManager;
 
 import javax.persistence.EntityManagerFactory;
 
@@ -48,9 +49,14 @@ public class Main {
       logger.info(context.getApplicationName()+" launched successfully");
    }
 
+   @Bean("hibernateTransactionManager")
+   public HibernateTransactionManager hibernateTransactionManager() {
+      return new HibernateTransactionManager(entityManagerFactory.unwrap(SessionFactoryImplementor.class));
+   }
+
    @Bean(name = "hibernateSession")
    public Session hibernateEntityManager() {
-      return entityManagerFactory.unwrap(SessionFactory.class).openSession();
+      return entityManagerFactory.unwrap(SessionFactoryImplementor.class).openSession();
    }
 
    @Bean
@@ -58,7 +64,6 @@ public class Main {
    public SearchSession fullTextEntityManager() throws InterruptedException {
       return Search.session(hibernateEntityManager());
    }
-
 
 
 }

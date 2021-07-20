@@ -1,7 +1,6 @@
 package dz.cirta.store.models;
 
-import dz.cirta.service.BusinessLogic;
-import org.hibernate.Session;
+import dz.cirta.service.IBusinessLogic;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,15 +16,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Abdessamed Diab
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "spring.profiles.active=dev") // integration test because we have filters.
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = "spring.profiles.active=dev")
 public class CommentTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommentTest.class);
 
     @Autowired
-    private BusinessLogic dao;
-
-    @Autowired
-    private Session hibernateSession;
+    private IBusinessLogic businessLogic;
 
     @Test
     public void testSave() {
@@ -42,13 +38,11 @@ public class CommentTest {
         comment.setPageNumber(13);
         comment.setPublishedAt(LocalDateTime.now().minusMinutes(10));
 
-        hibernateSession.beginTransaction();
-        hibernateSession.saveOrUpdate(author);
-        hibernateSession.saveOrUpdate(book);
-        hibernateSession.save(comment);
-        hibernateSession.getTransaction().commit();
+        businessLogic.saveOrUpdate(author);
+        businessLogic.saveOrUpdate(book);
+        businessLogic.save(comment);
 
-        List<Comment> comments = hibernateSession.createQuery("FROM Comment", Comment.class).getResultList();
+        List<Comment> comments = businessLogic.findAllByClass(Comment.class);
 
         assertTrue(true);
     }
@@ -68,6 +62,7 @@ public class CommentTest {
         parent.setContent("what the fuck!");
         parent.setPageNumber(13);
         parent.setPublishedAt(LocalDateTime.now().minusMinutes(10));
+        parent.setParent(true);
 
         List<Comment> comments = new ArrayList(5);
         for (int i =0; i < 5; i++) {
@@ -78,19 +73,22 @@ public class CommentTest {
             comment.setContent("what the fuck! "+i);
             comment.setPageNumber(i);
             comment.setPublishedAt(LocalDateTime.now().minusMinutes(i));
+            comment.setParent(false);
             comments.add(i, comment);
+            comment.setParentComment(parent);
         }
 
         parent.setReplies(comments);
 
-        hibernateSession.beginTransaction();
-        hibernateSession.saveOrUpdate(author);
-        hibernateSession.saveOrUpdate(book);
-        hibernateSession.save(parent);
-        hibernateSession.getTransaction().commit();
+        businessLogic.saveOrUpdate(author);
+        businessLogic.saveOrUpdate(book);
+        businessLogic.save(parent);
+
+        businessLogic.findAllByClass(Comment.class);
+
         assertTrue(parent.getReplies().get(0).getId() != null);
 
-        Comment fetchParent = hibernateSession.find(Comment.class, parent.getId());
+        Comment fetchParent = businessLogic.findFetchOptionalById(Comment.class, Comment_.ID, parent.getId(), Comment_.REPLIES).get();
         assertTrue(!fetchParent.getReplies().isEmpty());
     }
 

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>dz.cirta.api package</title>
+</head>
+  <body>
+    package contains security configuration of all exposed based http end points, implementation of both authentication and authorization workflows. and facebook login product integration with cirta-social
+    <br> by default, cirta-social do not serve any resource behind http protocol, every interaction should be encrypted, cirta-social redirect all http request to htpps in order to avoid men in the middle attacks.
+    <br> cors is fully activated, for now there is only one application components who's allowed to interact with cirta-social over http protocol. any request coming outside <a href="https://mobile.cirta.app" >mobile cirta social</a> will be ignored.
+    <br> cirta-social doesn't have such cross site request forgery vulnerability since all secured resources requires a valid access token, that access token cover user's session and delivered once a successful authentication just been established.
+  </body>
+</html>

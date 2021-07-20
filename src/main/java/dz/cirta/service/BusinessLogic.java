@@ -1,22 +1,28 @@
 package dz.cirta.service;
 
-import dz.cirta.store.models.Book;
-import dz.cirta.store.models.CirtaAuthority;
+import dz.cirta.store.models.*;
 import dz.cirta.store.repo.CirtaCommonsRepository;
 import dz.cirta.store.tools.PdfStreamApi;
 import org.hibernate.Session;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Abdessamed Diab
@@ -29,10 +35,10 @@ public class BusinessLogic implements IBusinessLogic, InitializingBean {
    private String volumeBaseDir;
 
    @Autowired
-   private Session hibernateSession;
+   private CirtaCommonsRepository cirtaCommonsRepository;
 
    @Autowired
-   private CirtaCommonsRepository cirtaCommonsRepository;
+   private Session hibernateSession;
 
    @Override
    public void afterPropertiesSet() {
@@ -57,11 +63,15 @@ public class BusinessLogic implements IBusinessLogic, InitializingBean {
 
    @Override
    @Transactional(readOnly = true)
-   public Set<CirtaAuthority> findAuthoritiesIn() {
-      return cirtaCommonsRepository.findAuthoritiesIn(
-            CirtaAuthority.AuthorityEnum.DEVELOPER.label,
-            CirtaAuthority.AuthorityEnum.TESTER.label
-      );
+   public Set<CirtaAuthority> findAuthoritiesIn(String ... values) {
+      if (values.length > 0) {
+         return cirtaCommonsRepository.findAuthoritiesIn(values);
+      } else {
+         return cirtaCommonsRepository.findAuthoritiesIn(
+               CirtaAuthority.AuthorityEnum.DEVELOPER.label,
+               CirtaAuthority.AuthorityEnum.TESTER.label
+         );
+      }
    }
 
    @Deprecated(since = "2.0", forRemoval = true)
@@ -83,6 +93,150 @@ public class BusinessLogic implements IBusinessLogic, InitializingBean {
       return cirtaCommonsRepository.findAllAuthoritiesByUserId(userId);
    }
 
+   @Override
+   @Transactional(readOnly = true)
+   public <T extends Serializable> List<T> findAllByClass(Class<T> type) {
+      return (List<T>) cirtaCommonsRepository.findAll(type);
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public <T> Optional<T> findOptionalById(Class<T> type, String idPropertyName, long primaryKey) {
+      return cirtaCommonsRepository.findOptionalById(type, idPropertyName, primaryKey);
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public <T> T findById(Class<T> type, String idPropertyName, long primaryKey) throws IllegalArgumentException {
+      return cirtaCommonsRepository.findById(type, idPropertyName, primaryKey);
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public <T> Optional<T> findFetchOptionalById(Class<T> type, String idPropertyName, long primaryKey, String ... fetchPropertyName) throws IllegalArgumentException {
+      return cirtaCommonsRepository.findOptionalById(type, idPropertyName, primaryKey, fetchPropertyName);
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public <T> T loadFromLocalCache(Class<T> type, long primaryKey) {
+      return cirtaCommonsRepository.findByReference(type, primaryKey);
+   }
+
+   @Override
+   @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "hibernateTransactionManager")
+   public boolean save(Serializable reference) {
+      Serializable result = cirtaCommonsRepository.save(reference);
+      return result != null;
+   }
+
+   @Override
+   @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "hibernateTransactionManager")
+   public void saveOrUpdate(Serializable reference) {
+      cirtaCommonsRepository.saveOrUpdate(reference);
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public Collection<Comment> findParentCommentsByGivenBookCoordinates(long bookId, int pageNumber) {
+      String hqlQuery = "select cs from Comment cs LEFT JOIN FETCH cs.replies R " +
+                        "where cs.book.id = :book and cs.pageNumber = :pageNumber " +
+                              "AND cs.parent = TRUE " +
+                        "ORDER BY cs.publishedAt DESC";
+      return cirtaCommonsRepository.createQuery(hqlQuery, Comment.class)
+            .setParameter("book", bookId)
+            .setParameter("pageNumber", pageNumber)
+            .getResultList();
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   @Deprecated(forRemoval = true, since = "2.0")
+   public CirtaUser findUserByNameAndPassword(String name, String password) {
+      CriteriaQuery<CirtaUser> criteriaQuery = hibernateSession.getCriteriaBuilder().createQuery(CirtaUser.class);
+      CriteriaBuilder criteriaBuilder = hibernateSession.getCriteriaBuilder();
+      Root<CirtaUser> root = criteriaQuery.from(CirtaUser.class);
+      criteriaQuery = criteriaQuery.select(root).where(
+         criteriaBuilder.and(
+            criteriaBuilder.equal(root.get(CirtaUser_.name), name),
+            criteriaBuilder.equal(root.get(CirtaUser_.password), password)
+         )
+      );
+
+      return hibernateSession.createQuery(criteriaQuery).uniqueResult();
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public CirtaUser findUserByFacebookId(String facebookId) {
+      return cirtaCommonsRepository.findUniqByPropertyNameAndValue(CirtaUser.class, CirtaUser_.FACEBOOK_ID, facebookId);
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public CirtaUser findUserByTempAuthenticationKey(String tempAuthenticationKey) {
+      String hqlQuery = "SELECT CU FROM CirtaUser CU where CU.tempAuthentication.key = :key";
+      return cirtaCommonsRepository.createQuery(hqlQuery, CirtaUser.class)
+            .setParameter("key", tempAuthenticationKey)
+            .uniqueResultOptional()
+            .orElse(null);
+   }
+
+   @Override
+   @Transactional(propagation = Propagation.REQUIRES_NEW, transactionManager = "hibernateTransactionManager")
+   public void update(Serializable serializable) {
+      cirtaCommonsRepository.update(serializable);
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public Set<Notification> fetchNotificationsByUsernameAndMinDate(String userName, LocalDateTime minDate) {
+      String hqlQuery =    "SELECT n FROM Notification n LEFT JOIN FETCH n.book B " +
+                           "WHERE n.reply.parentComment.author.name = :username " +
+                              "AND n.reply.author.name != :username " +
+                              "AND n.reply.publishedAt > :minDate   " +
+                           "ORDER BY n.reply.publishedAt DESC    ";
+
+      Stream<Notification> stream = cirtaCommonsRepository.createQuery(hqlQuery, Notification.class)
+            .setParameter("username", userName)
+            .setParameter("minDate", minDate).stream();
+
+      Set<Notification> result = stream.collect(Collectors.toSet());
+
+      stream.close();
+      return result;
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public int countNotifications(String userName, LocalDateTime minDate, String notificationType) {
+      String hqlQuery =    "SELECT n.id FROM Notification n " +
+                           "WHERE n.reply.parentComment.author.name = :username " +
+                              "AND n.reply.author.name != :username " +
+                              "AND n.reply.publishedAt > :minDate " +
+                              "AND n.type = :notificationType " +
+                           "ORDER BY n.reply.publishedAt DESC";
+
+      return cirtaCommonsRepository.createQuery(hqlQuery, Long.class)
+            .setParameter("username", userName)
+            .setParameter("minDate", minDate)
+            .setParameter("notificationType", notificationType)
+            .getResultList()
+            .size();
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public <T extends Serializable> Collection<T> findByQueryAndParams(Class<T> clazz, Map<String, Object> params, String hqlQuery) {
+      Query<T> query = cirtaCommonsRepository.createQuery(hqlQuery, clazz);
+
+      params.keySet().forEach(key -> {
+         query.setParameter(key, params.get(key));
+      });
+
+      return query.getResultList();
+   }
+
    /**
     * update summary data, hibernate search framework take care of updating elasticSearch cluster.
     * since we have a free bonsai.io cluster account, we need to push one single row at a time.
@@ -90,7 +244,6 @@ public class BusinessLogic implements IBusinessLogic, InitializingBean {
     * @return true if all books with there respective summaries were saved successfully.
     */
    private boolean loadBooksWithSummariesToElasticSearchCluster() throws IOException {
-      // check elastic search limit of queries per second.
       String pdfDocumentDirectory = volumeBaseDir + "books/";
       String coverPhotoFileNameMappingSourceFileUrl = volumeBaseDir + "books/cover_photo_file_name_mapping.txt";
 
@@ -136,4 +289,6 @@ public class BusinessLogic implements IBusinessLogic, InitializingBean {
       hibernateSession.clear();
       return true;
    }
+
+
 }
